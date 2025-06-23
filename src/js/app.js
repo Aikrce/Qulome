@@ -363,60 +363,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             function renderForm() {
-                formContainer.innerHTML = `
-                    <div class="form-group">
-                        <label for="theme-name">主题名称</label>
-                        <input type="text" id="theme-name" value="${theme.name}">
-                    </div>
-                    
-                    <h4>标题样式</h4>
-                    <div class="form-group">
-                        <label for="h1-color">标题颜色</label>
-                        <input type="color" id="h1-color" value="${theme.styles['--h1-color'] || '#001449'}">
-                    </div>
-                    
-                    <h4>正文样式</h4>
-                    <div class="form-group">
-                        <label for="p-color">正文颜色</label>
-                        <input type="color" id="p-color" value="${theme.styles['--p-color'] || '#374151'}">
-                    </div>
-                    <div class="form-group">
-                        <label for="p-margin-bottom">段落间距</label>
-                        <input type="text" id="p-margin-bottom" value="${theme.styles['--p-margin-bottom'] || '16px'}">
-                    </div>
-                    
-                    <h4>其他元素</h4>
-                    <div class="form-group">
-                        <label for="a-color">链接颜色</label>
-                        <input type="color" id="a-color" value="${theme.styles['--a-color'] || '#001449'}">
-                    </div>
-                    <div class="form-group">
-                        <label for="blockquote-bg">引用背景色</label>
-                        <input type="color" id="blockquote-bg" value="${theme.styles['--blockquote-bg'] || '#F8F9FA'}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <button type="button" onclick="window.location.hash='#themes'" class="btn-secondary">返回主题库</button>
-                    </div>
-                `;
+                // Define the structure of the accordion
+                const sections = {
+                    '标题系统': {
+                        'H1 字号': ['--h1-font-size', 'text'], 'H1 颜色': ['--h1-color', 'color'],
+                        'H2 字号': ['--h2-font-size', 'text'], 'H2 颜色': ['--h2-color', 'color'],
+                        'H3 字号': ['--h3-font-size', 'text'], 'H3 颜色': ['--h3-color', 'color'],
+                    },
+                    '正文系统': {
+                        '字号': ['--p-font-size', 'text'], '颜色': ['--p-color', 'color'],
+                        '行间距': ['--p-line-height', 'text'], '段落间距': ['--p-margin-bottom', 'text'],
+                    },
+                    '特殊文本': {
+                        '链接颜色': ['--a-color', 'color'], '链接悬停颜色': ['--a-hover-color', 'color'],
+                        '代码背景': ['--code-bg', 'color'], '代码颜色': ['--code-color', 'color'],
+                    },
+                    '块级元素': {
+                        '引用块背景': ['--blockquote-bg', 'color'], '引用块边框颜色': ['--blockquote-border-color', 'color'],
+                        '代码块背景': ['--code-block-bg', 'color'], '代码块颜色': ['--code-block-color', 'color'],
+                    },
+                    '视觉分隔': {
+                        '分割线颜色': ['--hr-color', 'color'], '分割线高度': ['--hr-height', 'text'],
+                    }
+                };
 
-                // Add event listeners
-                document.getElementById('theme-name').addEventListener('input', (e) => {
-                    theme.name = e.target.value;
-                    window.themeService.updateTheme(theme);
-                });
+                let formHtml = '<div class="accordion">';
+                for (const sectionTitle in sections) {
+                    formHtml += `
+                        <div class="accordion-item">
+                            <div class="accordion-header">${sectionTitle}</div>
+                            <div class="accordion-content">
+                    `;
+                    const fields = sections[sectionTitle];
+                    for (const label in fields) {
+                        const [styleKey, inputType] = fields[label];
+                        formHtml += `
+                            <div class="form-group">
+                                <label for="${styleKey}">${label}</label>
+                                <input type="${inputType}" id="${styleKey}" value="${theme.styles[styleKey] || ''}">
+                            </div>
+                        `;
+                    }
+                    formHtml += '</div></div>';
+                }
+                formHtml += '</div>';
                 
-                ['h1-color', 'p-color', 'p-margin-bottom', 'a-color', 'blockquote-bg'].forEach(id => {
-                    const inputElement = document.getElementById(id);
-                    const eventType = inputElement.type === 'color' ? 'input' : 'change';
-                    
-                    inputElement.addEventListener(eventType, (e) => {
-                        const styleKey = `--${id}`;
-                        theme.styles[styleKey] = e.target.value;
-                        renderPreview();
-                        window.themeService.updateTheme(theme);
+                formContainer.innerHTML = formHtml;
+
+                // --- Accordion Logic ---
+                document.querySelectorAll('.accordion-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        header.classList.toggle('active');
+                        content.classList.toggle('show');
                     });
                 });
+
+                // --- Event Listeners for all inputs ---
+                for (const section in sections) {
+                    for (const label in sections[section]) {
+                        const [styleKey] = sections[section][label];
+                        const inputElement = document.getElementById(styleKey);
+                        if(inputElement) {
+                            const eventType = inputElement.type === 'color' ? 'input' : 'change';
+                            inputElement.addEventListener(eventType, (e) => {
+                                theme.styles[styleKey] = e.target.value;
+                                renderPreview();
+                                window.themeService.updateTheme(theme);
+                            });
+                        }
+                    }
+                }
             }
             
             renderForm();

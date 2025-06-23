@@ -32,15 +32,15 @@ const defaultThemes = [
 class ThemeService {
     constructor() {
         console.log('ThemeService: Initializing...');
-        this.themes = this.loadThemes();
+        this.themes = JSON.parse(localStorage.getItem('themes')) || [];
         console.log('ThemeService: Loaded themes:', this.themes);
         this.activeThemeId = localStorage.getItem('activeThemeId') || null;
         console.log('ThemeService: Active theme ID:', this.activeThemeId);
         
-        // Initialize with default theme if no themes exist
+        // If no themes exist, create and add default ones
         if (this.themes.length === 0) {
             console.log('ThemeService: No themes found, adding default...');
-            this.addDefaultTheme();
+            this.addDefaultThemes();
         }
         console.log('ThemeService: Initialization complete');
     }
@@ -57,59 +57,82 @@ class ThemeService {
         localStorage.setItem('themes', JSON.stringify(this.themes));
     }
 
-    addDefaultTheme() {
-        const defaultTheme = {
-            id: this.generateId(),
-            name: '默认主题',
-            styles: {
-                '--h1-font-size': '24px',
-                '--h1-color': '#001449',
-                '--h2-font-size': '20px',
-                '--h2-color': '#001449',
-                '--p-font-size': '16px',
-                '--p-color': '#374151',
-                '--p-line-height': '1.6',
-                '--p-margin-bottom': '16px',
-                '--a-color': '#001449',
-                '--blockquote-bg': '#F8F9FA',
-                '--blockquote-border-color': '#001449',
-                '--code-bg': '#F1F3F4',
-                '--code-color': '#D63384'
-            }
+    createDefaultStyles() {
+        return {
+            // 1. 标题系统
+            '--h1-font-size': '24px', '--h1-color': '#1F2937', '--h1-font-weight': 'bold', '--h1-text-align': 'left',
+            '--h2-font-size': '20px', '--h2-color': '#1F2937', '--h2-font-weight': 'bold', '--h2-text-align': 'left',
+            '--h3-font-size': '18px', '--h3-color': '#1F2937', '--h3-font-weight': 'bold', '--h3-text-align': 'left',
+            
+            // 2. 正文系统
+            '--p-font-family': 'sans-serif', '--p-font-size': '16px', '--p-color': '#374151',
+            '--p-line-height': '1.7', '--p-margin-bottom': '20px', '--p-text-align': 'justify',
+            
+            // 3. 特殊文本
+            '--a-color': '#4338CA', '--a-hover-color': '#312E81',
+            '--strong-color': '#4338CA', '--em-color': '#4338CA',
+            '--code-bg': '#E5E7EB', '--code-color': '#BE123C',
+            
+            // 4. 块级元素
+            '--blockquote-bg': '#F3F4F6', '--blockquote-border-color': '#D1D5DB', '--blockquote-padding': '15px 20px', '--blockquote-color': '#4B5563',
+            '--code-block-bg': '#111827', '--code-block-color': '#E5E7EB', '--code-block-padding': '15px', '--code-block-border-radius': '6px',
+            '--ul-list-style': 'disc', '--ol-list-style': 'decimal', '--list-pl': '30px',
+            
+            // 5. 视觉分隔
+            '--hr-color': '#D1D5DB', '--hr-height': '1px', '--hr-margin': '30px 0',
         };
+    }
+
+    addDefaultThemes() {
+        const defaultThemes = [
+            {
+                id: this.generateId(),
+                name: '默认主题 (纯色)',
+                styles: this.createDefaultStyles()
+            },
+            {
+                id: this.generateId(),
+                name: '央视新闻',
+                styles: {
+                    // 1. 标题系统
+                    '--h1-font-size': '26px', '--h1-color': '#0E2A73', '--h1-font-weight': 'bold', '--h1-text-align': 'left',
+                    '--h2-font-size': '22px', '--h2-color': '#0E2A73', '--h2-font-weight': 'bold', '--h2-text-align': 'left',
+                    '--h3-font-size': '19px', '--h3-color': '#0E2A73', '--h3-font-weight': 'bold', '--h3-text-align': 'left',
+                    
+                    // 2. 正文系统
+                    '--p-font-family': '"Heiti SC", "Microsoft YaHei", sans-serif', '--p-font-size': '17px', '--p-color': '#333333',
+                    '--p-line-height': '1.8', '--p-margin-bottom': '22px', '--p-text-align': 'justify',
+                    
+                    // 3. 特殊文本
+                    '--a-color': '#0E2A73', '--a-hover-color': '#2C4BA3',
+                    '--strong-color': '#E0A26F', '--em-color': '#E0A26F',
+                    '--code-bg': '#F0F0F0', '--code-color': '#333',
+                    
+                    // 4. 块级元素
+                    '--blockquote-bg': '#F8F9FA', '--blockquote-border-color': '#0E2A73', '--blockquote-padding': '15px 20px', '--blockquote-color': '#333333',
+                    '--code-block-bg': '#0A1D4E', '--code-block-color': '#F8F9FA', '--code-block-padding': '15px', '--code-block-border-radius': '6px',
+                    '--ul-list-style': 'square', '--ol-list-style': 'decimal', '--list-pl': '30px',
+                    
+                    // 5. 视觉分隔
+                    '--hr-color': '#0E2A73', '--hr-height': '2px', '--hr-margin': '30px 0',
+                }
+            }
+        ];
         
-        this.themes.push(defaultTheme);
+        this.themes.push(...defaultThemes);
         this.saveThemes();
-        this.setActiveTheme(defaultTheme.id);
+        this.setActiveTheme(defaultThemes[0].id);
     }
 
     addTheme(name) {
-        console.log('ThemeService: Adding new theme with name:', name);
         const newTheme = {
             id: this.generateId(),
             name: name,
-            styles: {
-                '--h1-font-size': '24px',
-                '--h1-color': '#001449',
-                '--h2-font-size': '20px',
-                '--h2-color': '#001449',
-                '--p-font-size': '16px',
-                '--p-color': '#374151',
-                '--p-line-height': '1.6',
-                '--p-margin-bottom': '16px',
-                '--a-color': '#001449',
-                '--blockquote-bg': '#F8F9FA',
-                '--blockquote-border-color': '#001449',
-                '--code-bg': '#F1F3F4',
-                '--code-color': '#D63384'
-            }
+            styles: this.createDefaultStyles() // New themes start with default styles
         };
         
-        console.log('ThemeService: Created theme object:', newTheme);
         this.themes.push(newTheme);
-        console.log('ThemeService: Updated themes array:', this.themes);
         this.saveThemes();
-        console.log('ThemeService: Theme saved successfully');
         return newTheme;
     }
 

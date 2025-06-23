@@ -1,13 +1,22 @@
 :root {
-    --theme-color: #F472B6; /* Cherry Blossom Pink */
-    --accent-color: #FBBE24; /* Pollen Yellow */
-    --theme-color-light: rgba(244, 114, 182, 0.1);
-    --background-color: #F0F9FF; /* Light Sky Blue */
-    --text-color: #57534E; /* Branch Brown-Gray */
-    --sidebar-bg: #60A5FA; /* Clear Sky Blue */
-    --sidebar-text: #FFFFFF; /* White text on blue sidebar */
+    --primary-color: #FFFFFF;
+    --background-color: #F8F9FA;
+    --sidebar-bg: #0E2A73; /* CCTV Blue */
+    --sidebar-color: #FFFFFF; /* White Text */
+    --accent-color: #2C4BA3; /* Lighter Blue for active/hover */
+    --text-color: #212529;
+    --text-secondary-color: #6C757D;
+    --border-color: #DEE2E6;
+    --header-bg: #FFFFFF;
+    --button-primary-bg: #0E2A73; /* CCTV Blue */
+    --button-primary-color: #FFFFFF;
+    --button-secondary-bg: #E9ECEF;
+    --button-secondary-color: #212529;
+    --danger-color: #DC3545;
+    --theme-color: #4338CA; /* Deep Indigo (Blue-Purple) */
+    --theme-color-light: rgba(67, 56, 202, 0.1);
+    --sidebar-text: #FFFFFF; /* White text on dark sidebar */
     --sidebar-width: 200px;
-    --border-color: #E0F2FE; /* Very Light Blue Border */
 }
 
 body {
@@ -34,9 +43,11 @@ body {
 }
 
 .sidebar .logo {
-    font-size: 24px;
+    font-size: 2.5rem;
     font-weight: bold;
     margin-bottom: 30px;
+    color: var(--sidebar-color);
+    text-align: center;
 }
 
 .sidebar .logo a {
@@ -59,6 +70,7 @@ body {
     margin-bottom: 5px;
     font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
+    text-align: center;
 }
 
 .sidebar ul li a:hover {
@@ -214,8 +226,26 @@ body {
 }
 
 .theme-card h3 {
-    margin-top: 0;
-    font-size: 1.2rem;
+    margin: 10px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.theme-card h3.theme-name {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.theme-card h3.theme-name:hover {
+    color: var(--accent-color);
+}
+
+.theme-card h3[contenteditable="true"] {
+    cursor: text;
+    background-color: #ffffff;
+    outline: 2px solid var(--accent-color);
+    border-radius: 4px;
+    padding: 2px 5px;
 }
 
 .theme-preview {
@@ -241,6 +271,7 @@ body {
 
 .theme-actions {
     display: flex;
+    justify-content: center;
     gap: 10px;
 }
 
@@ -280,45 +311,49 @@ body {
 }
 
 /* General Button Styles */
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+    text-align: center;
+}
+
 .btn-primary {
-    background-color: var(--theme-color);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    background-color: transparent;
+    color: var(--button-primary-bg);
+    border: 2px solid var(--button-primary-bg);
 }
 
-.btn-accent {
+.btn-primary:hover {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-color);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--button-primary-bg);
+    border: 2px solid var(--button-primary-bg);
+}
+
+.btn-secondary:hover {
     background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.btn-primary:hover, .btn-accent:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
+    color: var(--button-primary-color);
+    border-color: var(--accent-color);
 }
 
 .btn-danger {
-    background-color: #EF4444; /* Red */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-color);
+    border: 2px solid var(--button-primary-bg);
 }
+
 .btn-danger:hover {
-    background-color: #DC2626;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 .btn-full {
@@ -699,85 +734,181 @@ body {
     margin-bottom: 0;
 }
 
+/* Accordion Styles for Theme Editor */
+.accordion {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.accordion-item {
+    border-bottom: 1px solid var(--border-color);
+}
+.accordion-item:last-child {
+    border-bottom: none;
+}
+
+.accordion-header {
+    background-color: #ffffff;
+    padding: 15px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    transition: background-color 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.accordion-header:hover {
+    background-color: var(--background-color);
+}
+
+.accordion-header::after {
+    content: '+';
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    transition: transform 0.3s ease;
+}
+
+.accordion-header.active::after {
+    transform: rotate(45deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    background-color: var(--background-color);
+    padding: 0 20px;
+}
+
+.accordion-content.show {
+    padding: 20px;
+    max-height: 1000px; /* Adjust as needed */
+}
+
+.accordion-content .form-group {
+    margin-left: 10px;
+    padding-left: 15px;
+    border-left: 2px solid var(--accent-color);
+}
+
 /* Apply theme variables to editor content */
-#editor-container .ql-editor h1 {
+#editor-container .ql-editor, #theme-preview-pane {
+    text-align: var(--p-text-align, justify);
+}
+
+#editor-container .ql-editor h1, #theme-preview-pane h1 {
     font-size: var(--h1-font-size, 24px);
-    color: var(--h1-color, #001449);
+    color: var(--h1-color, #1F2937);
     font-weight: var(--h1-font-weight, bold);
     text-align: var(--h1-text-align, left);
-    margin-bottom: var(--h1-margin-bottom, 20px);
 }
 
-#editor-container .ql-editor h2 {
+#editor-container .ql-editor h2, #theme-preview-pane h2 {
     font-size: var(--h2-font-size, 20px);
-    color: var(--h2-color, #001449);
+    color: var(--h2-color, #1F2937);
     font-weight: var(--h2-font-weight, bold);
     text-align: var(--h2-text-align, left);
-    margin-bottom: var(--h2-margin-bottom, 16px);
 }
 
-#editor-container .ql-editor h3 {
+#editor-container .ql-editor h3, #theme-preview-pane h3 {
     font-size: var(--h3-font-size, 18px);
-    color: var(--h3-color, #001449);
+    color: var(--h3-color, #1F2937);
     font-weight: var(--h3-font-weight, bold);
     text-align: var(--h3-text-align, left);
-    margin-bottom: var(--h3-margin-bottom, 14px);
 }
 
-#editor-container .ql-editor p {
+#editor-container .ql-editor p, #theme-preview-pane p {
+    font-family: var(--p-font-family, sans-serif);
     font-size: var(--p-font-size, 16px);
     color: var(--p-color, #374151);
-    line-height: var(--p-line-height, 1.6);
-    margin-bottom: var(--p-margin-bottom, 16px);
-    text-align: var(--p-text-align, left);
+    line-height: var(--p-line-height, 1.7);
+    margin-bottom: var(--p-margin-bottom, 20px);
 }
 
-#editor-container .ql-editor a {
-    color: var(--a-color, #001449);
-    text-decoration: var(--a-text-decoration, underline);
+#editor-container .ql-editor a, #theme-preview-pane a {
+    color: var(--a-color, #4338CA);
+    text-decoration: none;
+}
+#editor-container .ql-editor a:hover, #theme-preview-pane a:hover {
+    color: var(--a-hover-color, #312E81);
 }
 
-#editor-container .ql-editor a:hover {
-    color: var(--a-hover-color, #0056b3);
+#editor-container .ql-editor strong, #theme-preview-pane strong {
+    color: var(--strong-color, inherit);
+}
+#editor-container .ql-editor em, #theme-preview-pane em {
+    color: var(--em-color, inherit);
 }
 
-#editor-container .ql-editor blockquote {
-    background-color: var(--blockquote-bg, #F8F9FA);
-    border-left: var(--blockquote-border-width, 4px) solid var(--blockquote-border-color, #001449);
-    padding: var(--blockquote-padding, 16px 20px);
-    margin: 10px 0;
-    font-style: var(--blockquote-font-style, italic);
-    color: var(--blockquote-color, #6C757D);
+#editor-container .ql-editor blockquote, #theme-preview-pane blockquote {
+    background-color: var(--blockquote-bg, #F3F4F6);
+    border-left: 4px solid var(--blockquote-border-color, #D1D5DB);
+    padding: var(--blockquote-padding, 15px 20px);
+    color: var(--blockquote-color, #4B5563);
+    margin: var(--p-margin-bottom, 20px) 0;
 }
 
-#editor-container .ql-editor code {
-    background-color: var(--code-bg, #F1F3F4);
-    color: var(--code-color, #D63384);
-    padding: var(--code-padding, 2px 6px);
-    border-radius: var(--code-border-radius, 4px);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-}
-
-#editor-container .ql-editor pre {
-    background-color: var(--code-block-bg, #F8F9FA);
-    color: var(--code-block-color, #212529);
-    padding: var(--code-block-padding, 16px);
+#editor-container .ql-editor .ql-code-block-container, #theme-preview-pane pre {
+    background-color: var(--code-block-bg, #111827);
+    color: var(--code-block-color, #E5E7EB);
+    padding: var(--code-block-padding, 15px);
     border-radius: var(--code-block-border-radius, 6px);
+    margin: var(--p-margin-bottom, 20px) 0;
     overflow-x: auto;
 }
-
-#editor-container .ql-editor ul, 
-#editor-container .ql-editor ol {
-    margin-bottom: var(--list-margin-bottom, 16px);
+#editor-container .ql-editor code:not(.ql-code-block), #theme-preview-pane code {
+    background-color: var(--code-bg, #E5E7EB);
+    color: var(--code-color, #BE123C);
+    padding: .2em .4em;
+    border-radius: 3px;
 }
 
-#editor-container .ql-editor li {
-    margin-bottom: var(--list-item-margin-bottom, 8px);
+#editor-container .ql-editor ul, #editor-container .ql-editor ol,
+#theme-preview-pane ul, #theme-preview-pane ol {
+    padding-left: var(--list-pl, 30px);
+    margin-bottom: var(--p-margin-bottom, 20px);
+}
+#editor-container .ql-editor ul, #theme-preview-pane ul {
+    list-style: var(--ul-list-style, disc);
+}
+#editor-container .ql-editor ol, #theme-preview-pane ol {
+    list-style: var(--ol-list-style, decimal);
 }
 
-#editor-container .ql-editor hr {
+#editor-container .ql-editor hr, #theme-preview-pane hr {
     border: none;
     height: var(--hr-height, 1px);
-    background-color: var(--hr-color, #DEE2E6);
-    margin: var(--hr-margin, 24px 0);
+    background-color: var(--hr-color, #D1D5DB);
+    margin: var(--hr-margin, 30px 0);
+}
+
+.main-view .view-header .btn {
+    padding: 10px 18px;
+    font-size: 1rem;
+}
+
+#editor-container {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 900px;
+}
+
+.main-view-actions {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-bottom: 30px; /* Add some space at the bottom */
+}
+
+.theme-card {
+    background-color: #fff;
+    border-radius: 8px;
 } 
