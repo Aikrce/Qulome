@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Qulome - 文字可以很美</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/dist/feather.min.css">
+    <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/wechat-styles.css">
+</head>
+<body>
+    <!-- 侧边栏悬停触发器 -->
+    <div id="hover-trigger" class="hover-trigger"></div>
+    
+    <!-- 侧边栏 -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Qulome</div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-item" data-view="editor">
+                <i class="fas fa-edit"></i>
+                <span>主视图</span>
+            </div>
+            <div class="menu-item" data-view="icons">
+                <i class="fas fa-icons"></i>
+                <span>图标库</span>
+            </div>
+            <div class="menu-item" data-view="themes">
+                <i class="fas fa-palette"></i>
+                <span>主题库</span>
+            </div>
+            <div class="menu-item" data-view="drafts">
+                <i class="fas fa-file-alt"></i>
+                <span>草稿仓</span>
+            </div>
+            <div class="menu-item" data-view="publish">
+                <i class="fas fa-rocket"></i>
+                <span>发布仓</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main id="main-content" class="main-content">
+        
+        <!-- 欢迎界面 -->
+        <div id="welcome-view" class="view active">
+            <div class="welcome-container">
+                <div class="welcome-title">
+                    <h1 class="greek-title">κύλημα</h1>
+                    <p class="chinese-subtitle">文字可以很美</p>
+                </div>
+                <div class="welcome-buttons">
+                    <button class="welcome-btn" data-action="select-template">
+                        <i class="fas fa-palette"></i>
+                        选择模版
+                    </button>
+                    <button class="welcome-btn" data-action="start-editing">
+                        <i class="fas fa-edit"></i>
+                        直接开始
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主视图 - 编辑器 -->
+        <div id="editor-view" class="view">
+            <div class="view-header">
+                <h2>富文本编辑器</h2>
+                <div class="view-actions">
+                    <button class="btn btn-secondary" id="import-md">
+                        <i class="fas fa-file-import"></i>
+                        导入MD
+                    </button>
+                    <button class="btn btn-primary" id="save-draft">
+                        <i class="fas fa-save"></i>
+                        保存草稿
+                    </button>
+                </div>
+            </div>
+            <div class="editor-container">
+                <div id="quill-editor"></div>
+                <!-- 隐藏的文件输入元素 -->
+                <input type="file" id="md-file-input" accept=".md,.txt" style="display: none;">
+            </div>
+        </div>
+
+        <!-- 图标库视图 -->
+        <div id="icons-view" class="view">
+            <div class="view-header">
+                <h2>我的图标库</h2>
+                <div class="category-selector">
+                    <select class="category-dropdown" id="category-selector">
+                        <option value="all">全部分类</option>
+                        <option value="ui">UI图标</option>
+                        <option value="decoration">装饰图标</option>
+                        <option value="function">功能图标</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+            </div>
+            <div class="icons-main-container">
+                <!-- 左侧：已存图标 -->
+                <div class="saved-icons-section">
+                    <h3 class="section-title">已存图标</h3>
+                    <div class="saved-icons-grid" id="saved-icons-grid">
+                        <!-- 示例图标，实际使用时通过JavaScript动态加载 -->
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-file-alt" style="color: #dc3545; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">文件</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-volleyball-ball" style="color: #007bff; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">排球</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-battery-three-quarters" style="color: #28a745; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">电池</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-hand-pointer" style="color: #fd7e14; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">点击</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-fist-raised" style="color: #343a40; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">重击</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-arrow-right" style="color: #343a40; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">推进</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-sign-in-alt" style="color: #007bff; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">进入</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                        <div class="icon-card">
+                            <div class="icon-display">
+                                <i class="fas fa-border-all" style="color: #6f42c1; font-size: 32px;"></i>
+                            </div>
+                            <div class="icon-name">双框</div>
+                            <div class="icon-actions">
+                                <button class="btn-copy">复制</button>
+                                <button class="btn-delete">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：添加新图标 -->
+                <div class="add-icon-section">
+                    <h3 class="section-title">添加新图标</h3>
+                    <div class="add-icon-form">
+                        <div class="form-group">
+                            <label class="form-label">输入名称 (例如：'一级标题符')</label>
+                            <input type="text" class="form-input" id="new-icon-name" placeholder="图标名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">粘贴或输入 SVG 完整代码</label>
+                            <textarea class="form-textarea" id="new-icon-svg" rows="8" placeholder="<svg>...</svg>"></textarea>
+                        </div>
+                        <button class="btn btn-primary btn-full-width" id="save-new-icon">
+                            <i class="fas fa-save"></i>
+                            保存到图标库
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主题库视图 -->
+        <div id="themes-view" class="view">
+            <div class="view-header">
+                <h2>主题库</h2>
+                <div class="view-actions">
+                    <button class="btn btn-secondary" id="create-theme">
+                        <i class="fas fa-plus"></i>
+                        新建主题
+                    </button>
+                </div>
+            </div>
+            <div class="themes-container">
+                <!-- 左侧分类栏 -->
+                <div class="themes-sidebar">
+                    <div class="theme-categories">
+                        <h3>主题分类</h3>
+                        <ul class="category-list">
+                            <li class="category-item active" data-category="all">全部主题</li>
+                            <li class="category-item" data-category="minimal">简约风格</li>
+                            <li class="category-item" data-category="business">商务风格</li>
+                            <li class="category-item" data-category="creative">创意风格</li>
+                            <li class="category-item" data-category="elegant">优雅风格</li>
+                            <li class="category-item" data-category="tech">科技风格</li>
+                            <li class="category-item" data-category="custom">我的自定义</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 中间主题展示区 -->
+                <div class="themes-main">
+                    <div class="themes-grid" id="themes-grid">
+                        <!-- 主题卡片将通过JavaScript动态加载 -->
+                    </div>
+                </div>
+
+                <!-- 右侧主题编辑器 -->
+                <div class="themes-editor" id="themes-editor">
+                    <div class="theme-editor-header">
+                        <h3 class="theme-editor-title">创建新主题</h3>
+                        <button class="theme-editor-close" id="close-theme-editor">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- 标题样式设置 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-target="title-settings">
+                            <div class="accordion-title">
+                                <i class="fas fa-heading"></i>
+                                标题样式
+                            </div>
+                            <i class="fas fa-chevron-right accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content" id="title-settings">
+                            <div class="form-group">
+                                <label class="form-label">字体大小</label>
+                                <input type="range" class="form-range" min="16" max="32" value="24" id="title-size">
+                                <div class="range-display">
+                                    <span>16px</span>
+                                    <span id="title-size-value">24px</span>
+                                    <span>32px</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">字体粗细</label>
+                                <select class="form-select" id="title-weight">
+                                    <option value="300">细体</option>
+                                    <option value="400">正常</option>
+                                    <option value="500">中等</option>
+                                    <option value="600" selected>半粗</option>
+                                    <option value="700">粗体</option>
+                                    <option value="800">特粗</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#1d1d1f" id="title-color">
+                                    <input type="text" class="form-input" value="#1d1d1f" id="title-color-text" style="width: 80px;">
+                                </div>
+                                <div class="preset-colors">
+                                    <div class="preset-color" style="background: #1d1d1f;" data-color="#1d1d1f"></div>
+                                    <div class="preset-color" style="background: #667eea;" data-color="#667eea"></div>
+                                    <div class="preset-color" style="background: #f093fb;" data-color="#f093fb"></div>
+                                    <div class="preset-color" style="background: #4facfe;" data-color="#4facfe"></div>
+                                    <div class="preset-color" style="background: #43e97b;" data-color="#43e97b"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">下划线样式</label>
+                                <div class="style-options">
+                                    <div class="style-option active" data-style="none">无</div>
+                                    <div class="style-option" data-style="solid">实线</div>
+                                    <div class="style-option" data-style="dashed">虚线</div>
+                                    <div class="style-option" data-style="dotted">点线</div>
+                                    <div class="style-option" data-style="gradient">渐变线</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">行间距</label>
+                                <input type="range" class="form-range" min="1.0" max="2.0" step="0.1" value="1.4" id="title-line-height">
+                                <div class="range-display">
+                                    <span>1.0</span>
+                                    <span id="title-line-height-value">1.4</span>
+                                    <span>2.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 正文样式设置 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-target="body-settings">
+                            <div class="accordion-title">
+                                <i class="fas fa-paragraph"></i>
+                                正文样式
+                            </div>
+                            <i class="fas fa-chevron-right accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content" id="body-settings">
+                            <div class="form-group">
+                                <label class="form-label">字体大小</label>
+                                <input type="range" class="form-range" min="12" max="20" value="16" id="body-size">
+                                <div class="range-display">
+                                    <span>12px</span>
+                                    <span id="body-size-value">16px</span>
+                                    <span>20px</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">行间距</label>
+                                <input type="range" class="form-range" min="1.2" max="2.0" step="0.1" value="1.6" id="body-line-height">
+                                <div class="range-display">
+                                    <span>1.2</span>
+                                    <span id="body-line-height-value">1.6</span>
+                                    <span>2.0</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">段落间距</label>
+                                <input type="range" class="form-range" min="8" max="32" value="16" id="body-margin">
+                                <div class="range-display">
+                                    <span>8px</span>
+                                    <span id="body-margin-value">16px</span>
+                                    <span>32px</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">文字颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#333333" id="body-color">
+                                    <input type="text" class="form-input" value="#333333" id="body-color-text" style="width: 80px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 链接样式设置 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-target="link-settings">
+                            <div class="accordion-title">
+                                <i class="fas fa-link"></i>
+                                链接样式
+                            </div>
+                            <i class="fas fa-chevron-right accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content" id="link-settings">
+                            <div class="form-group">
+                                <label class="form-label">链接颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#667eea" id="link-color">
+                                    <input type="text" class="form-input" value="#667eea" id="link-color-text" style="width: 80px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">下划线样式</label>
+                                <div class="style-options">
+                                    <div class="style-option" data-style="none">无</div>
+                                    <div class="style-option active" data-style="solid">实线</div>
+                                    <div class="style-option" data-style="dashed">虚线</div>
+                                    <div class="style-option" data-style="dotted">点线</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">悬停效果</label>
+                                <div class="style-options">
+                                    <div class="style-option active" data-hover="color">变色</div>
+                                    <div class="style-option" data-hover="underline">下划线</div>
+                                    <div class="style-option" data-hover="background">背景色</div>
+                                    <div class="style-option" data-hover="none">无效果</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 代码块样式设置 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-target="code-settings">
+                            <div class="accordion-title">
+                                <i class="fas fa-code"></i>
+                                代码块样式
+                            </div>
+                            <i class="fas fa-chevron-right accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content" id="code-settings">
+                            <div class="form-group">
+                                <label class="form-label">背景颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#f8f9fa" id="code-bg-color">
+                                    <input type="text" class="form-input" value="#f8f9fa" id="code-bg-color-text" style="width: 80px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">文字颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#e83e8c" id="code-text-color">
+                                    <input type="text" class="form-input" value="#e83e8c" id="code-text-color-text" style="width: 80px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">内边距</label>
+                                <input type="range" class="form-range" min="4" max="16" value="8" id="code-padding">
+                                <div class="range-display">
+                                    <span>4px</span>
+                                    <span id="code-padding-value">8px</span>
+                                    <span>16px</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">圆角</label>
+                                <input type="range" class="form-range" min="0" max="12" value="4" id="code-radius">
+                                <div class="range-display">
+                                    <span>0px</span>
+                                    <span id="code-radius-value">4px</span>
+                                    <span>12px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分隔线样式设置 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-target="divider-settings">
+                            <div class="accordion-title">
+                                <i class="fas fa-minus"></i>
+                                分隔线样式
+                            </div>
+                            <i class="fas fa-chevron-right accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content" id="divider-settings">
+                            <div class="form-group">
+                                <label class="form-label">线条样式</label>
+                                <div class="style-options">
+                                    <div class="style-option active" data-style="solid">实线</div>
+                                    <div class="style-option" data-style="dashed">虚线</div>
+                                    <div class="style-option" data-style="dotted">点线</div>
+                                    <div class="style-option" data-style="gradient">渐变</div>
+                                    <div class="style-option" data-style="decorative">装饰线</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">线条颜色</label>
+                                <div class="color-picker-group">
+                                    <input type="color" class="color-input" value="#e9ecef" id="divider-color">
+                                    <input type="text" class="form-input" value="#e9ecef" id="divider-color-text" style="width: 80px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">线条粗细</label>
+                                <input type="range" class="form-range" min="1" max="8" value="2" id="divider-width">
+                                <div class="range-display">
+                                    <span>1px</span>
+                                    <span id="divider-width-value">2px</span>
+                                    <span>8px</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">上下间距</label>
+                                <input type="range" class="form-range" min="16" max="48" value="24" id="divider-margin">
+                                <div class="range-display">
+                                    <span>16px</span>
+                                    <span id="divider-margin-value">24px</span>
+                                    <span>48px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 预览和保存 -->
+                    <div class="theme-preview-panel">
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #666;">实时预览</h4>
+                        <div class="preview-content" id="theme-preview-content">
+                            <h1>这是一级标题</h1>
+                            <p>这是正文内容，展示当前主题的样式效果。你可以在左侧调整各种参数，这里会实时显示效果。</p>
+                            <p>这里有一个<a href="#">链接示例</a>，可以看到链接的样式效果。</p>
+                            <code>这是代码块示例</code>
+                            <hr>
+                            <p>分隔线上方的内容。</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 12px;">
+                        <button class="btn btn-primary" id="save-theme" style="flex: 1;">
+                            <i class="fas fa-save"></i>
+                            保存主题
+                        </button>
+                        <button class="btn btn-secondary" id="reset-theme">
+                            <i class="fas fa-undo"></i>
+                            重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 草稿仓视图 -->
+        <div id="drafts-view" class="view">
+            <div class="view-header">
+                <h2>草稿仓</h2>
+                <div class="view-actions">
+                    <button class="btn btn-primary" id="batch-import-md">
+                        <i class="fas fa-file-import"></i>
+                        批量导入MD
+                    </button>
+                    <button class="btn btn-secondary" id="batch-apply-theme">
+                        <i class="fas fa-magic"></i>
+                        批量应用主题
+                    </button>
+                </div>
+            </div>
+            <div class="drafts-container">
+                <div class="drafts-list" id="drafts-list">
+                    <!-- 草稿列表将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 发布仓视图 -->
+        <div id="publish-view" class="view">
+            <div class="view-header">
+                <h2>发布仓</h2>
+                <div class="view-actions">
+                    <button class="btn btn-primary" id="export-all">
+                        <i class="fas fa-download"></i>
+                        批量导出
+                    </button>
+                </div>
+            </div>
+            <div class="publish-container">
+                <div class="publish-list" id="publish-list">
+                    <!-- 发布列表将通过JavaScript动态加载 -->
+                </div>
+        </div>
+    </div>
+
+    </main>
+
+
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="md-file-input" accept=".md,.txt" style="display: none;">
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="js/markdown-parser.js"></script>
+    <script src="js/wechat-formatter.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html> 
