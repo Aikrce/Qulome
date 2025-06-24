@@ -29,32 +29,66 @@ const defaultThemes = [
     }
 ];
 
+// 统一的日志管理
+const Logger = {
+    debug: (message, data = null) => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log(`[ThemeService Debug] ${message}`, data || '');
+        }
+    },
+    error: (message, error = null) => {
+        console.error(`[ThemeService Error] ${message}`, error || '');
+    },
+    info: (message, data = null) => {
+        console.info(`[ThemeService Info] ${message}`, data || '');
+    }
+};
+
 class ThemeService {
     constructor() {
-        console.log('ThemeService: Initializing...');
-        this.themes = JSON.parse(localStorage.getItem('themes')) || [];
-        console.log('ThemeService: Loaded themes:', this.themes);
-        this.activeThemeId = localStorage.getItem('activeThemeId') || null;
-        console.log('ThemeService: Active theme ID:', this.activeThemeId);
-        
-        // If no themes exist, create and add default ones
-        if (this.themes.length === 0) {
-            console.log('ThemeService: No themes found, adding default...');
-            this.addDefaultThemes();
+        this.themes = [];
+        this.activeThemeId = null;
+        this.init();
+    }
+
+    init() {
+        try {
+            Logger.debug('Initializing ThemeService...');
+            this.loadThemes();
+            
+            this.activeThemeId = localStorage.getItem('qulome_active_theme_id');
+            Logger.debug('Active theme ID loaded', this.activeThemeId);
+
+            if (this.themes.length === 0) {
+                Logger.info('No themes found, adding default theme');
+                this.addDefaultTheme();
+            }
+            Logger.debug('ThemeService initialization complete');
+        } catch (error) {
+            Logger.error('Failed to initialize ThemeService', error);
         }
-        console.log('ThemeService: Initialization complete');
     }
 
     loadThemes() {
-        console.log('ThemeService: Loading themes from localStorage...');
-        const themes = localStorage.getItem('themes');
-        const result = themes ? JSON.parse(themes) : [];
-        console.log('ThemeService: Loaded themes result:', result);
-        return result;
+        try {
+            Logger.debug('Loading themes from localStorage...');
+            const storedThemes = localStorage.getItem('qulome_themes');
+            const result = storedThemes ? JSON.parse(storedThemes) : [];
+            this.themes = result;
+            Logger.debug('Themes loaded successfully', result);
+        } catch (error) {
+            Logger.error('Failed to load themes from localStorage', error);
+            this.themes = [];
+        }
     }
 
     saveThemes() {
-        localStorage.setItem('themes', JSON.stringify(this.themes));
+        try {
+            localStorage.setItem('qulome_themes', JSON.stringify(this.themes));
+            Logger.debug('Themes saved successfully');
+        } catch (error) {
+            Logger.error('Failed to save themes to localStorage', error);
+        }
     }
 
     createDefaultStyles() {
@@ -81,6 +115,18 @@ class ThemeService {
             // 5. 视觉分隔
             '--hr-color': '#D1D5DB', '--hr-height': '1px', '--hr-margin': '30px 0',
         };
+    }
+
+    addDefaultTheme() {
+        try {
+            const defaultTheme = DEFAULT_THEMES[0];
+            this.themes.push(defaultTheme);
+            this.saveThemes();
+            this.setActiveTheme(defaultTheme.id);
+            Logger.debug('Default theme added');
+        } catch (error) {
+            Logger.error('Failed to add default theme', error);
+        }
     }
 
     addDefaultThemes() {
@@ -137,8 +183,13 @@ class ThemeService {
     }
 
     setActiveTheme(themeId) {
-        this.activeThemeId = themeId;
-        localStorage.setItem('activeThemeId', themeId);
+        try {
+            this.activeThemeId = themeId;
+            localStorage.setItem('qulome_active_theme_id', themeId);
+            Logger.debug('Active theme set', themeId);
+        } catch (error) {
+            Logger.error('Failed to set active theme', error);
+        }
     }
 
     getActiveTheme() {
@@ -172,10 +223,10 @@ class ThemeService {
     
     // Debug method
     test() {
-        console.log('ThemeService test:');
-        console.log('- Themes count:', this.themes.length);
-        console.log('- Themes:', this.themes);
-        console.log('- Active theme ID:', this.activeThemeId);
+        Logger.debug('ThemeService test');
+        Logger.debug('Themes count', this.themes.length);
+        Logger.debug('Themes', this.themes);
+        Logger.debug('Active theme ID', this.activeThemeId);
         return 'ThemeService is working!';
     }
 }

@@ -31,7 +31,7 @@ function saveIcons(icons) {
 
 function addIcon(name, svg) {
     if (!name || !svg) {
-        console.error("Icon name and SVG content are required.");
+        throw new Error("Icon name and SVG content are required.");
         return null;
     }
     const icons = getIcons();
