@@ -29,37 +29,16 @@
 #editor-container.ql-container.ql-snow {
     border: none; /* Remove default container border */
     min-height: 500px;
+    height: calc(100vh - 300px); /* 灵活的高度设置 */
+    max-height: 800px; /* 限制最大高度 */
     font-size: 16px;
     color: var(--text-color);
     background-color: var(--bg-color-secondary);
-}
-
-.main-view-header {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.main-view-header h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
-    margin: 0 0 4px 0;
-    color: var(--text-color);
-}
-
-.main-view-header p {
-    font-size: 1rem;
-    color: var(--text-secondary-color);
-    margin: 0;
-    max-width: 600px;
 }
 
 @media (max-width: 768px) {
     .editor-actions {
         flex-direction: column;
         gap: 8px;
-    }
-    .main-view-header h1 {
-        font-size: 1.75rem;
     }
 } 

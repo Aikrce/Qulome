@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qulome - 文字可以很美</title>
-    <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
     <link rel="stylesheet" href="src/styles/main.css">
+    <!-- Enhanced Views with improved event binding and error handling -->
     <link rel="stylesheet" href="src/styles/editor-view.css">
-    <link rel="stylesheet" href="src/styles/icons-view.css">
     <link rel="stylesheet" href="src/styles/themes-view.css">
+    <link rel="stylesheet" href="src/styles/icons-view.css">
     <link rel="stylesheet" href="src/styles/drafts-view.css">
     <link rel="stylesheet" href="src/styles/publish-view.css">
+    
+    <!-- External Dependencies -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -46,7 +51,26 @@
                     <button id="copy-wechat-btn" class="btn btn-accent">一键复制</button>
                 </div>
                 <div class="editor-wrapper">
-                    <div id="editor-container" style="height: calc(100vh - 220px);"></div>
+                    <div id="editor-container"></div>
+                </div>
+                <div class="editor-bottom-actions">
+                    <button id="save-draft-btn" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17,21 17,13 7,13 7,21"/>
+                            <polyline points="7,3 7,8 15,8"/>
+                        </svg>
+                        保存修改
+                    </button>
+                    <button id="discard-draft-btn" class="btn btn-danger">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"/>
+                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                        放弃修改
+                    </button>
                 </div>
             </div>
             <div id="drafts-view" class="drafts-view" style="display:none;">
@@ -72,7 +96,7 @@
                 <div class="icons-main">
                     <div class="main-view-header">
                         <h1>我的图标库</h1>
-                        <p>管理您的SVG图标，方便在文章中随时调用。</p>
+                        <p>管理您的SVG图标，方便在文章中随时调用。支持颜色编辑功能。</p>
                     </div>
                     <div id="icons-grid" class="icons-grid">
                         <!-- Icons will be rendered here -->
@@ -120,6 +144,100 @@
                     </form>
                 </div>
             </div>
+            
+            <!-- 主题编辑器静态HTML -->
+            <div id="theme-editor-view" class="theme-editor-view" style="display:none;">
+                <div class="theme-editor-header">
+                    <h2 id="theme-editor-title">编辑主题</h2>
+                    <button class="theme-editor-close" onclick="window.location.hash='#themes'">&times;</button>
+                </div>
+                <div class="theme-editor-body">
+                    <div class="theme-editor-sidebar">
+                        <div class="editor-tabs">
+                            <button class="tab-btn active" data-tab="basic">基础设置</button>
+                            <button class="tab-btn" data-tab="advanced">高级设置</button>
+                        </div>
+                        <form id="theme-editor-form" class="editor-form">
+                            <!-- 基础设置 -->
+                            <div class="tab-content active" id="basic-tab">
+                                <div class="form-section">
+                                    <h4>标题样式</h4>
+                                    <div class="form-row">
+                                        <label for="--h1-color">H1 颜色</label>
+                                        <input type="color" id="--h1-color" name="--h1-color">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="--h2-color">H2 颜色</label>
+                                        <input type="color" id="--h2-color" name="--h2-color">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="--h3-color">H3 颜色</label>
+                                        <input type="color" id="--h3-color" name="--h3-color">
+                                    </div>
+                                </div>
+                                <div class="form-section">
+                                    <h4>正文样式</h4>
+                                    <div class="form-row">
+                                        <label for="--p-color">正文颜色</label>
+                                        <input type="color" id="--p-color" name="--p-color">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="--p-font-size">字体大小</label>
+                                        <input type="range" id="--p-font-size" name="--p-font-size" min="12" max="24" step="1">
+                                        <span class="range-value">16px</span>
+                                    </div>
+                                </div>
+                                <div class="form-section">
+                                    <h4>链接样式</h4>
+                                    <div class="form-row">
+                                        <label for="--a-color">链接颜色</label>
+                                        <input type="color" id="--a-color" name="--a-color">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 高级设置 -->
+                            <div class="tab-content" id="advanced-tab">
+                                <div class="form-section">
+                                    <h4>块级元素</h4>
+                                    <div class="form-row">
+                                        <label for="--blockquote-bg">引用背景</label>
+                                        <input type="color" id="--blockquote-bg" name="--blockquote-bg">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="--code-bg">代码背景</label>
+                                        <input type="color" id="--code-bg" name="--code-bg">
+                                    </div>
+                                </div>
+                                <div class="form-section">
+                                    <h4>间距设置</h4>
+                                    <div class="form-row">
+                                        <label for="--p-margin-bottom">段落间距</label>
+                                        <input type="range" id="--p-margin-bottom" name="--p-margin-bottom" min="10" max="40" step="2">
+                                        <span class="range-value">20px</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="theme-editor-preview">
+                        <h3>实时预览</h3>
+                        <div id="theme-preview-pane" class="preview-content">
+                            <h1>这是标题样式</h1>
+                            <p>这是正文段落的样式预览。您可以在这里看到字体颜色、段落间距等效果。</p>
+                            <p>这段包含<a href="#">链接样式</a>的文字，可以看到链接的颜色效果。</p>
+                            <blockquote>这是引用块的样式预览，可以看到背景色效果。</blockquote>
+                            <p>这里有一些<strong>粗体文字</strong>和<em>斜体文字</em>的样式。</p>
+                            <hr>
+                            <p>这是分割线下方的文字。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="theme-editor-footer">
+                    <button class="btn btn-secondary" onclick="window.location.hash='#themes'">取消</button>
+                    <button class="btn btn-primary" id="save-theme-btn">保存主题</button>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -138,6 +256,7 @@
     <script src="src/js/views/editor-view.js"></script>
     <script src="src/js/views/icons-view.js"></script>
     <script src="src/js/views/themes-view.js"></script>
+    <script src="src/js/views/theme-editor-view.js"></script>
     <script src="src/js/views/drafts-view.js"></script>
     <script src="src/js/views/publish-view.js"></script>
 

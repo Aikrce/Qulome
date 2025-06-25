@@ -9,6 +9,48 @@
  * - 草稿自动保存和发布管理
  * - 一键复制到微信编辑器
  */
+
+// 回滚 ErrorHandler 拆分，恢复原有定义
+const ErrorHandler = {
+    /**
+     * 处理错误的主入口
+     * @param {Error|string} error - 错误对象或错误消息
+     * @param {string} context - 错误发生的上下文，用于调试
+     */
+    handle: (error, context = 'Unknown') => {
+        window.Logger.error(`Error in ${context}`, error);
+        // 向用户显示友好的错误提示
+        const userMessage = ErrorHandler.getUserMessage(error);
+        if (userMessage) {
+            alert(userMessage);
+        }
+    },
+    /**
+     * 将技术性错误转换为用户友好的消息
+     * @param {Error|string} error - 错误对象或错误消息
+     * @returns {string} 用户友好的错误消息
+     */
+    getUserMessage: (error) => {
+        if (typeof error === 'string') {
+            return error;
+        }
+        if (error.message) {
+            if (error.message.includes('localStorage')) {
+                return '存储空间不足，请清理浏览器缓存后重试。';
+            }
+            if (error.message.includes('JSON')) {
+                return '数据格式错误，将重置相关设置。';
+            }
+            if (error.message.includes('required')) {
+                return '请填写必要的信息。';
+            }
+            return error.message;
+        }
+        return '操作失败，请重试。';
+    }
+};
+window.ErrorHandler = ErrorHandler;
+
 document.addEventListener('DOMContentLoaded', () => {
     // ==================== DOM元素缓存 ====================
     // 缓存常用的DOM元素引用，避免重复查询，提升性能
@@ -22,72 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
         themes: document.querySelector('a[href="#themes"]'),     // 主题库导航
         drafts: document.querySelector('a[href="#drafts"]'),     // 草稿仓导航
         publish: document.querySelector('a[href="#publish"]')    // 发布仓导航
-    };
-
-    // Make Logger globally available
-    window.Logger = {
-        debug: (message, data = null) => {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                console.log(`[Qulome Debug] ${message}`, data || '');
-            }
-        },
-        error: (message, error = null) => {
-            console.error(`[Qulome Error] ${message}`, error || '');
-        },
-        info: (message, data = null) => {
-            console.info(`[Qulome Info] ${message}`, data || '');
-        }
-    };
-
-    // ==================== 错误处理系统 ====================
-    /**
-     * 统一的错误处理机制
-     * 负责捕获、记录和用户友好地显示错误信息
-     */
-    const ErrorHandler = {
-        /**
-         * 处理错误的主入口
-         * @param {Error|string} error - 错误对象或错误消息
-         * @param {string} context - 错误发生的上下文，用于调试
-         */
-        handle: (error, context = 'Unknown') => {
-            Logger.error(`Error in ${context}`, error);
-            
-            // 向用户显示友好的错误提示
-            const userMessage = ErrorHandler.getUserMessage(error);
-            if (userMessage) {
-                alert(userMessage);
-            }
-        },
-        
-        /**
-         * 将技术性错误转换为用户友好的消息
-         * @param {Error|string} error - 错误对象或错误消息
-         * @returns {string} 用户友好的错误消息
-         */
-        getUserMessage: (error) => {
-            // 如果错误本身就是字符串消息，直接返回
-            if (typeof error === 'string') {
-                return error;
-            }
-            
-            if (error.message) {
-                // 根据错误类型提供相应的用户友好提示
-                if (error.message.includes('localStorage')) {
-                    return '存储空间不足，请清理浏览器缓存后重试。';
-                }
-                if (error.message.includes('JSON')) {
-                    return '数据格式错误，将重置相关设置。';
-                }
-                if (error.message.includes('required')) {
-                    return '请填写必要的信息。';
-                }
-                return error.message;
-            }
-            
-            // 兜底的通用错误消息
-            return '操作失败，请重试。';
-        }
     };
 
     // ==================== 数据验证工具 ====================
@@ -139,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * 通过CSS自定义属性(CSS Variables)的方式，使主题变量在全局CSS中可用
      * 这是主题系统的核心函数，确保样式的统一性
      */
+    /* 删除此函数，使用 themeService.applyTheme() 替代
     const applyCurrentActiveTheme = () => {
         try {
             const activeTheme = window.themeService.getActiveTheme();
@@ -153,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Logger.error('Failed to apply active theme', error);
         }
     };
+    */
 
     // ==================== 导航图标系统 ====================
     /**
@@ -356,6 +334,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Keep track of the current active view for cleanup
+    let currentActiveView = null;
+    let globalEventHandlers = new Map(); // 跟踪全局事件处理器
+
+    /**
+     * 改进的清理机制 - 确保所有事件处理器都被正确移除
+     */
+    const cleanupCurrentView = () => {
+        try {
+            if (currentActiveView && window[currentActiveView]) {
+                window.Logger.debug(`Cleaning up ${currentActiveView}...`);
+                
+                // 调用视图的清理方法
+                if (typeof window[currentActiveView].cleanup === 'function') {
+                    window[currentActiveView].cleanup();
+                    window.Logger.debug(`${currentActiveView} cleanup completed`);
+                } else {
+                    window.Logger.warn(`${currentActiveView} has no cleanup method`);
+                }
+                
+                currentActiveView = null;
+            }
+        } catch (error) {
+            window.Logger.error('Failed to cleanup current view', error);
+        }
+    };
+
+    /**
+     * 添加全局事件处理器并跟踪
+     */
+    const addGlobalEventHandler = (element, event, callback, description = '') => {
+        if (!element) {
+            window.Logger.warn('Attempted to add event handler to null element', description);
+            return;
+        }
+        
+        // 移除现有处理器（如果存在）
+        const existingHandler = globalEventHandlers.get(`${element.id || 'unknown'}-${event}`);
+        if (existingHandler) {
+            element.removeEventListener(event, existingHandler.callback);
+            window.Logger.debug(`Removed existing ${event} handler for ${description}`);
+        }
+
+        // 添加新处理器
+        element.addEventListener(event, callback);
+        globalEventHandlers.set(`${element.id || 'unknown'}-${event}`, { 
+            event, 
+            callback, 
+            description,
+            element 
+        });
+        
+        window.Logger.debug(`Added ${event} handler for ${description}`);
+    };
+
+    /**
+     * 清理所有全局事件处理器
+     */
+    const cleanupGlobalEventHandlers = () => {
+        window.Logger.debug(`Cleaning up ${globalEventHandlers.size} global event handlers...`);
+        
+        globalEventHandlers.forEach((handler, key) => {
+            try {
+                if (handler.element && typeof handler.element.removeEventListener === 'function') {
+                    handler.element.removeEventListener(handler.event, handler.callback);
+                    window.Logger.debug(`Removed global ${handler.event} handler for ${handler.description}`);
+                }
+            } catch (error) {
+                window.Logger.error(`Failed to remove global event handler for ${handler.description}`, error);
+            }
+        });
+        
+        globalEventHandlers.clear();
+        window.Logger.debug('Global event handlers cleanup completed');
+    };
+
     /**
      * 主视图渲染函数 - 简化的静态视图切换系统
      * 所有视图都已静态化到HTML中，这里只负责显示/隐藏切换
@@ -364,79 +418,126 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCurrentView(fullHash) {
         const hash = fullHash.split('?')[0]; // 提取基础路由
         
+        window.Logger.debug(`Rendering view for hash: ${fullHash} (base: ${hash})`);
+        
+        // 使用改进的清理机制
+        cleanupCurrentView();
+        
         // 隐藏所有视图
-        document.querySelectorAll('#welcome-view, #editor-view, #icons-view, #themes-view, #drafts-view, #publish-view').forEach(v => v.style.display = 'none');
+        const allViews = document.querySelectorAll('#welcome-view, #editor-view, #icons-view, #themes-view, #drafts-view, #publish-view');
+        allViews.forEach(v => v.style.display = 'none');
+        window.Logger.debug(`Hidden ${allViews.length} views`);
         
         // 根据路由显示对应视图并初始化
         switch (hash) {
             case '#welcome':
             case '#':
             case '':
+                window.Logger.debug('Showing welcome view');
                 document.getElementById('welcome-view').style.display = 'block';
+                currentActiveView = null;
                 break;
             case '#editor':
+                window.Logger.debug('Initializing editor view');
                 document.getElementById('editor-view').style.display = 'block';
-                if (window.EditorView) window.EditorView.init();
+                if (window.EditorView) {
+                    window.EditorView.init();
+                    currentActiveView = 'EditorView';
+                    window.Logger.debug('Editor view initialized successfully');
+                } else {
+                    window.Logger.error('EditorView not found');
+                }
                 break;
             case '#icons':
+                window.Logger.debug('Initializing icons view');
                 document.getElementById('icons-view').style.display = 'block';
-                if (window.IconsView) window.IconsView.init();
+                if (window.IconsView) {
+                    window.IconsView.init();
+                    currentActiveView = 'IconsView';
+                    window.Logger.debug('Icons view initialized successfully');
+                } else {
+                    window.Logger.error('IconsView not found');
+                }
                 break;
             case '#themes':
+                window.Logger.debug('Initializing themes view');
                 document.getElementById('themes-view').style.display = 'block';
-                if (window.ThemesView) window.ThemesView.init();
+                if (window.ThemesView) {
+                    window.ThemesView.init();
+                    currentActiveView = 'ThemesView';
+                    window.Logger.debug('Themes view initialized successfully');
+                } else {
+                    window.Logger.error('ThemesView not found');
+                }
                 break;
             case '#drafts':
+                window.Logger.debug('Initializing drafts view');
                 document.getElementById('drafts-view').style.display = 'block';
-                if (window.DraftsView) window.DraftsView.init();
+                if (window.DraftsView) {
+                    window.DraftsView.init();
+                    currentActiveView = 'DraftsView';
+                    window.Logger.debug('Drafts view initialized successfully');
+                } else {
+                    window.Logger.error('DraftsView not found');
+                }
                 break;
             case '#publish':
+                window.Logger.debug('Initializing publish view');
                 document.getElementById('publish-view').style.display = 'block';
-                if (window.PublishView) window.PublishView.init();
+                if (window.PublishView) {
+                    window.PublishView.init();
+                    currentActiveView = 'PublishView';
+                    window.Logger.debug('Publish view initialized successfully');
+                } else {
+                    window.Logger.error('PublishView not found');
+                }
                 break;
             case '#theme-editor':
-                // 主题编辑器仍然需要动态生成，因为需要传递参数
+                window.Logger.debug('Initializing theme editor');
+                // 使用静态HTML的主题编辑器
                 const urlParams = new URLSearchParams(fullHash.split('?')[1]);
                 const themeId = urlParams.get('id');
                 let theme = window.themeService.getTheme(themeId);
                 if (!theme) {
+                    window.Logger.error('Theme not found for editor', themeId);
                     alert('主题未找到!');
                     window.location.hash = '#themes';
-            return;
-        }
-                appRoot.innerHTML = `
-                    <div class="theme-editor-view">
-                        <h2>编辑主题: ${theme.name}</h2>
-                        <div style="display: flex; gap: 20px;">
-                            <div style="flex: 1;">
-                                <form id="theme-editor-form">
-                                    <!-- Form will be populated by JavaScript -->
-                                </form>
-                            </div>
-                            <div style="flex: 1;">
-                                <h3>预览</h3>
-                                <div id="theme-preview-pane" style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: white;">
-                                    <!-- Preview will be populated by JavaScript -->
-                                </div>
-                </div>
-                </div>
-            </div>
-                `;
-                if (RouteHandlers['theme-editor']) {
-                    RouteHandlers['theme-editor'](fullHash);
+                    return;
+                }
+                window.Logger.debug(`Editing theme: ${theme.name} (${themeId})`);
+                
+                // 显示主题编辑器视图
+                document.getElementById('theme-editor-view').style.display = 'block';
+                
+                // 初始化主题编辑器
+                if (window.ThemeEditorView) {
+                    window.ThemeEditorView.init(theme);
+                    currentActiveView = 'ThemeEditorView';
+                    window.Logger.debug('Theme editor initialized successfully');
+                } else {
+                    window.Logger.error('ThemeEditorView not found');
                 }
                 break;
             default:
+                window.Logger.warn(`Unknown route: ${hash}, showing welcome view`);
                 // 未知路由，显示欢迎页
                 document.getElementById('welcome-view').style.display = 'block';
                 break;
         }
 
         // 应用当前激活的主题样式到整个文档
-        applyCurrentActiveTheme();
+        const activeTheme = window.themeService.getActiveTheme();
+        if (activeTheme) {
+            window.Logger.debug(`Applying active theme: ${activeTheme.name} (${activeTheme.id})`);
+            window.themeService.applyTheme(activeTheme.id);
+        } else {
+            window.Logger.warn('No active theme found');
+        }
         
         // 更新侧边栏导航图标，确保每次视图切换后图标都正确显示
         setupSidebar();
+        
+        window.Logger.debug(`View rendering completed. Current active view: ${currentActiveView}`);
     }
 
     // 视图渲染函数已移至各自的模块中
@@ -454,14 +555,57 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleRouteChange() {
         const fullHash = window.location.hash || '#welcome';
         const hash = fullHash.split('?')[0]; // Get the base route, e.g., '#theme-editor'
+        
+        window.Logger.debug(`Route changed to: ${fullHash} (base: ${hash})`);
+        
         renderCurrentView(fullHash); // Pass the full hash to renderCurrentView
         updateActiveLink(hash); // Use the base route for the active link
+        
+        window.Logger.debug('Route change handling completed');
     }
 
-    window.addEventListener('hashchange', handleRouteChange);
+    // 添加全局事件监听器
+    addGlobalEventHandler(window, 'hashchange', handleRouteChange, 'hashchange route handler');
+
+    // 页面卸载时清理所有事件处理器
+    addGlobalEventHandler(window, 'beforeunload', () => {
+        window.Logger.debug('Page unloading, cleaning up all event handlers...');
+        cleanupCurrentView();
+        cleanupGlobalEventHandlers();
+    }, 'page unload cleanup');
 
     // Initial load
+    window.Logger.debug('Initial page load, handling route change...');
     handleRouteChange();
 
     // 一键发布功能已移至editor-view.js模块中
 }); 
+
+// 回滚Logger拆分，恢复原有定义
+window.Logger = {
+    debug: (message, data = null) => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log(`[Qulome Debug] ${message}`, data || '');
+        }
+    },
+    error: (message, error = null) => {
+        console.error(`[Qulome Error] ${message}`, error || '');
+    },
+    info: (message, data = null) => {
+        console.info(`[Qulome Info] ${message}`, data || '');
+    },
+    warn: (message, data = null) => {
+        console.warn(`[Qulome Warn] ${message}`, data || '');
+    },
+    // 添加性能监控
+    time: (label) => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.time(`[Qulome] ${label}`);
+        }
+    },
+    timeEnd: (label) => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.timeEnd(`[Qulome] ${label}`);
+        }
+    }
+}; 

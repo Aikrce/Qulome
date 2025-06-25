@@ -16,8 +16,9 @@
 
 .icons-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, 200px);
     gap: 20px;
+    justify-content: center;
 }
 
 .icon-card {
@@ -25,14 +26,17 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 16px 8px 8px 8px;
-    margin: 8px;
+    width: 200px;
+    height: 200px;
+    padding: 20px 16px 16px 16px;
+    margin: 0;
     border-radius: var(--border-radius-md);
     background: #f8fafc;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    cursor: pointer;
     border: 2px solid transparent;
     transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+    position: relative;
+    box-sizing: border-box;
 }
 .icon-card:hover {
     border: 2px solid var(--theme-color);
@@ -43,21 +47,99 @@
     background: #dbeafe;
 }
 
-.icon-preview {
-    height: 80px;
+.icon-card-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+}
+
+.icon-card:hover .icon-card-delete {
+    opacity: 1;
+}
+
+.icon-card-delete:hover {
+    background: #c53030;
+    transform: scale(1.1);
+}
+
+.icon-preview {
+    height: 60px;
+    width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    background: transparent;
 }
 .icon-preview svg {
-    width: 48px;
-    height: 48px;
-    color: var(--text-color);
+    width: 40px;
+    height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    /* Remove color override to let SVG use its own colors */
+    /* color: var(--text-color); */
 }
 .icon-name {
     font-weight: 500;
     text-align: center;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.icon-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.icon-card:hover .icon-actions {
+    opacity: 1;
+}
+
+.icon-actions .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: auto;
+}
+
+.icon-actions .btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.icon-color-picker {
+    position: relative;
+}
+
+.icon-color-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
 }
 
 /* Modal Icons Grid */
@@ -70,24 +152,28 @@
     justify-content: flex-start;
 }
 
-@media (max-width: 768px) {
-    .icons-view {
-        flex-direction: column;
-    }
-    .icons-sidebar {
-        width: 100%;
-        margin-top: 24px;
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-        padding-top: 24px;
-    }
-    .icons-grid {
-        grid-template-columns: 1fr;
-    }
-}
+/* 删除重复的移动端样式，使用 main.css 中的统一样式 */
 
-@media (min-width: 769px) and (max-width: 1024px) {
-    .icons-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.icon-libs-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin: 24px 0 0 0;
+    justify-content: flex-start;
+}
+.icon-lib-btn {
+    border: 1.5px solid var(--theme-color);
+    background: #fff;
+    color: var(--theme-color);
+    border-radius: var(--border-radius-md);
+    padding: 7px 18px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.icon-lib-btn:hover {
+    background: var(--theme-color);
+    color: #fff;
+    border-color: var(--theme-color);
 } 
