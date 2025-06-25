@@ -1,0 +1,65 @@
+/* Editor View Styles - 独立于主视图的样式 */
+
+.editor-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 15px;
+}
+
+.editor-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.editor-wrapper {
+    margin-top: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden; /* Ensures children (toolbar, editor) respect the parent's border-radius */
+}
+
+.ql-toolbar.ql-snow {
+    border: none; /* Remove default top border */
+    border-bottom: 1px solid var(--border-color);
+}
+
+#editor-container.ql-container.ql-snow {
+    border: none; /* Remove default container border */
+    min-height: 500px;
+    font-size: 16px;
+    color: var(--text-color);
+    background-color: var(--bg-color-secondary);
+}
+
+.main-view-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.main-view-header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--text-color);
+}
+
+.main-view-header p {
+    font-size: 1rem;
+    color: var(--text-secondary-color);
+    margin: 0;
+    max-width: 600px;
+}
+
+@media (max-width: 768px) {
+    .editor-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .main-view-header h1 {
+        font-size: 1.75rem;
+    }
+} 

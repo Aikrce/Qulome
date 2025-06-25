@@ -119,7 +119,7 @@ class ThemeService {
 
     addDefaultTheme() {
         try {
-            const defaultTheme = DEFAULT_THEMES[0];
+            const defaultTheme = defaultThemes[0];
             this.themes.push(defaultTheme);
             this.saveThemes();
             this.setActiveTheme(defaultTheme.id);
@@ -174,7 +174,25 @@ class ThemeService {
         const newTheme = {
             id: this.generateId(),
             name: name,
-            styles: this.createDefaultStyles() // New themes start with default styles
+            styles: {
+                // 使用与 addDefaultThemes() 相同的默认样式配置
+                '--h1-font-size': '24px', '--h1-color': '#1F2937', '--h1-font-weight': 'bold', '--h1-text-align': 'left',
+                '--h2-font-size': '20px', '--h2-color': '#1F2937', '--h2-font-weight': 'bold', '--h2-text-align': 'left',
+                '--h3-font-size': '18px', '--h3-color': '#1F2937', '--h3-font-weight': 'bold', '--h3-text-align': 'left',
+                
+                '--p-font-family': 'sans-serif', '--p-font-size': '16px', '--p-color': '#374151',
+                '--p-line-height': '1.7', '--p-margin-bottom': '20px', '--p-text-align': 'justify',
+                
+                '--a-color': '#4338CA', '--a-hover-color': '#312E81',
+                '--strong-color': '#4338CA', '--em-color': '#4338CA',
+                '--code-bg': '#E5E7EB', '--code-color': '#BE123C',
+                
+                '--blockquote-bg': '#F3F4F6', '--blockquote-border-color': '#D1D5DB', '--blockquote-padding': '15px 20px', '--blockquote-color': '#4B5563',
+                '--code-block-bg': '#111827', '--code-block-color': '#E5E7EB', '--code-block-padding': '15px', '--code-block-border-radius': '6px',
+                '--ul-list-style': 'disc', '--ol-list-style': 'decimal', '--list-pl': '30px',
+                
+                '--hr-color': '#D1D5DB', '--hr-height': '1px', '--hr-margin': '30px 0',
+            }
         };
         
         this.themes.push(newTheme);
@@ -189,6 +207,22 @@ class ThemeService {
             Logger.debug('Active theme set', themeId);
         } catch (error) {
             Logger.error('Failed to set active theme', error);
+        }
+    }
+
+    applyTheme(themeName) {
+        try {
+            const theme = this.themes.find(t => t.name === themeName);
+            if (theme) {
+                this.setActiveTheme(theme.id);
+                Logger.debug('Theme applied by name', themeName);
+            } else {
+                Logger.error('Theme not found', themeName);
+                throw new Error(`主题 "${themeName}" 未找到`);
+            }
+        } catch (error) {
+            Logger.error('Failed to apply theme', error);
+            throw error;
         }
     }
 
@@ -228,6 +262,16 @@ class ThemeService {
         Logger.debug('Themes', this.themes);
         Logger.debug('Active theme ID', this.activeThemeId);
         return 'ThemeService is working!';
+    }
+
+    deleteTheme(themeName) {
+        this.themes = this.themes.filter(theme => theme.name !== themeName);
+        this.saveThemes();
+        // 如果删除的是当前激活主题，则切换到第一个主题
+        if (this.activeThemeId && !this.themes.find(t => t.id === this.activeThemeId)) {
+            this.activeThemeId = this.themes.length > 0 ? this.themes[0].id : null;
+            localStorage.setItem('qulome_active_theme_id', this.activeThemeId || '');
+        }
     }
 }
 

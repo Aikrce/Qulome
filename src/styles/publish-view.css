@@ -1,0 +1,46 @@
+/* Publish View Styles - 独立于发布仓的样式 */
+
+.publish-view {
+    /* 可根据实际需求补充布局样式 */
+}
+
+.item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.list-item {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: box-shadow 0.2s;
+}
+.list-item:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-title {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.item-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary-color);
+}
+
+.item-actions {
+    display: flex;
+    gap: 10px;
+} 

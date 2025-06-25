@@ -52,6 +52,11 @@ function deleteIcon(iconId) {
     saveIcons(icons);
 }
 
+function getIcon(iconId) {
+    const icons = getIcons();
+    return icons.find(icon => icon.id === iconId);
+}
+
 function updateIcon(iconId, newName, newColor) {
     let icons = getIcons();
     const iconIndex = icons.findIndex(i => i.id === iconId);
@@ -68,6 +73,7 @@ function updateIcon(iconId, newName, newColor) {
 
 window.iconService = {
     getIcons,
+    getIcon,
     addIcon,
     deleteIcon,
     updateIcon

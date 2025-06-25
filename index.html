@@ -6,6 +6,11 @@
     <title>Qulome - 文字可以很美</title>
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
     <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/editor-view.css">
+    <link rel="stylesheet" href="src/styles/icons-view.css">
+    <link rel="stylesheet" href="src/styles/themes-view.css">
+    <link rel="stylesheet" href="src/styles/drafts-view.css">
+    <link rel="stylesheet" href="src/styles/publish-view.css">
 </head>
 <body>
     <div class="container">
@@ -21,18 +26,122 @@
                 <li><a href="#publish">发布仓</a></li>
             </ul>
         </nav>
-        <main id="app-root" class="main-content">
-            <!-- Views will be rendered here -->
+        <main id="main-content" class="main-content">
+            <div id="welcome-view" class="welcome-view">
+                <h1>κύλημα</h1>
+                <p>文字可以很美</p>
+                <div class="welcome-buttons">
+                    <a href="#themes" class="btn">选择模版</a>
+                    <a href="#editor" class="btn">直接开始</a>
+                </div>
+            </div>
+            <div id="editor-view" class="editor-view" style="display:none;">
+                <div class="main-view-header">
+                    <h1>主视图</h1>
+                    <p>在这里挥洒您的创意，让思想流动成美丽的文字。</p>
+                </div>
+                <div class="editor-actions">
+                    <button id="import-md-btn" class="btn btn-secondary">导入Markdown</button>
+                    <button id="change-theme-btn" class="btn btn-secondary">更换主题</button>
+                    <button id="copy-wechat-btn" class="btn btn-accent">一键复制</button>
+                </div>
+                <div class="editor-wrapper">
+                    <div id="editor-container" style="height: calc(100vh - 220px);"></div>
+                </div>
+            </div>
+            <div id="drafts-view" class="drafts-view" style="display:none;">
+                <div class="main-view-header">
+                    <h1>草稿仓</h1>
+                    <p>这里存放着您所有未完成的作品。点击"载入"即可继续编辑。</p>
+                </div>
+                <div id="drafts-list" class="item-list">
+                    <!-- Drafts will be rendered here by DraftsView.js -->
+                </div>
+            </div>
+            <div id="publish-view" class="publish-view" style="display:none;">
+                <div class="main-view-header">
+                    <h1>发布仓</h1>
+                    <p>这里是您已完成的杰作。可以随时将它们移回草稿仓进行再次编辑。</p>
+                </div>
+                <div id="publish-list" class="item-list">
+                    <!-- Published articles will be rendered here by PublishView.js -->
+                </div>
+            </div>
+            <!-- 其它视图可在后续逐步静态化 -->
+            <div id="icons-view" class="icons-view" style="display:none;">
+                <div class="icons-main">
+                    <div class="main-view-header">
+                        <h1>我的图标库</h1>
+                        <p>管理您的SVG图标，方便在文章中随时调用。</p>
+                    </div>
+                    <div id="icons-grid" class="icons-grid">
+                        <!-- Icons will be rendered here -->
+                    </div>
+                </div>
+                <div class="icons-sidebar">
+                    <h3>添加新图标</h3>
+                    <form id="add-icon-form">
+                        <div class="form-group">
+                            <label for="icon-name">图标名称</label>
+                            <input type="text" id="icon-name" name="icon-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="icon-svg">SVG 代码</label>
+                            <textarea id="icon-svg" name="icon-svg" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">保存到图标库</button>
+                    </form>
+                    <div class="icon-resources">
+                        <p>寻找灵感？试试这些免费图标库：</p>
+                        <ul>
+                            <li><a href="https://tabler-icons.io/" target="_blank">Tabler Icons</a></li>
+                            <li><a href="https://lucide.dev/" target="_blank">Lucide</a></li>
+                            <li><a href="https://heroicons.com/" target="_blank">Heroicons</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="themes-view" class="themes-view" style="display:none;">
+                <div class="themes-main">
+                    <div class="main-view-header">
+                        <h1>我的主题库</h1>
+                        <p>在这里创建、编辑和管理您的文章主题。</p>
+                    </div>
+                    <div id="themes-grid" class="themes-grid">
+                        <!-- Theme cards will be rendered here -->
+                    </div>
+                </div>
+                <div class="themes-sidebar">
+                    <h2>创建新主题</h2>
+                    <p>从这里开始，为您的新主题命名。</p>
+                    <form id="add-theme-form">
+                        <input type="text" id="new-theme-name" name="theme-name" placeholder="我的新主题">
+                        <button type="submit" class="btn btn-primary btn-full">创建新主题</button>
+                    </form>
+                </div>
+            </div>
         </main>
     </div>
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+
+    <!-- App Services -->
     <script src="src/js/config.js"></script>
     <script src="src/js/theme-service.js"></script>
     <script src="src/js/draft-service.js"></script>
-    <script src="src/js/icon-service.js"></script>
     <script src="src/js/publish-service.js"></script>
+    <script src="src/js/icon-service.js"></script>
+    
+    <!-- View-specific Logic -->
+    <script src="src/js/views/editor-view.js"></script>
+    <script src="src/js/views/icons-view.js"></script>
+    <script src="src/js/views/themes-view.js"></script>
+    <script src="src/js/views/drafts-view.js"></script>
+    <script src="src/js/views/publish-view.js"></script>
+
+    <!-- Main App Logic -->
     <script src="src/js/app.js"></script>
 </body>
 </html> 

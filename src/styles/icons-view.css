@@ -1,0 +1,93 @@
+/* Icons View Styles - 独立于图标库的样式 */
+
+.icons-view {
+    display: flex;
+    gap: 20px;
+}
+
+.icons-main {
+    flex: 3;
+}
+
+.icons-sidebar {
+    flex: 1;
+    min-width: 280px;
+}
+
+.icons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 8px 8px 8px;
+    margin: 8px;
+    border-radius: var(--border-radius-md);
+    background: #f8fafc;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+}
+.icon-card:hover {
+    border: 2px solid var(--theme-color);
+    background: #e6ecfa;
+    box-shadow: 0 4px 12px rgba(14,42,115,0.08);
+}
+.icon-card:active {
+    background: #dbeafe;
+}
+
+.icon-preview {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+.icon-preview svg {
+    width: 48px;
+    height: 48px;
+    color: var(--text-color);
+}
+.icon-name {
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Modal Icons Grid */
+#modal-icons-grid.icons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 48vh;
+    overflow-y: auto;
+    justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+    .icons-view {
+        flex-direction: column;
+    }
+    .icons-sidebar {
+        width: 100%;
+        margin-top: 24px;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding-top: 24px;
+    }
+    .icons-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .icons-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+} 
