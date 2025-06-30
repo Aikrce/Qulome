@@ -92,44 +92,41 @@ window.PublishView = {
             return;
         }
 
-        listContainer.innerHTML = publishedArticles.map(article => `
-             <div class="list-item" data-article-id="${article.id}">
+        listContainer.innerHTML = publishedArticles.map(article => {
+            const wordCount = window.PublishView.getWordCount(article.content);
+            const paragraphCount = (article.content.match(/<p[\s>]/g)||[]).length;
+            const imageCount = (article.content.match(/<img[\s>]/g)||[]).length;
+            return `
+            <div class="list-item" data-article-id="${article.id}">
+              <div class="item-main">
                 <div class="item-info">
-                        <h3 class="item-title" title="${window.PublishView.escapeHtml(article.title)}">
-                            ${window.PublishView.escapeHtml(article.title)}
-                        </h3>
-                        <p class="item-meta">
-                            <span class="publish-time">发布于: ${window.PublishView.formatDate(article.updatedAt)}</span>
-                            <span class="word-count">${window.PublishView.getWordCount(article.content)} 字</span>
-                        </p>
-                        <div class="item-preview">
-                            ${window.PublishView.getContentPreview(article.content)}
-                        </div>
+                  <h3 class="item-title" title="${window.PublishView.escapeHtml(article.title)}">
+                    ${window.PublishView.escapeHtml(article.title)}
+                  </h3>
+                  <div class="item-preview">
+                    ${window.PublishView.getContentPreview(article.content)}
+                  </div>
+                </div>
+                <div class="item-stats">
+                  <div class="stat"><span class="stat-num">${wordCount}</span><span class="stat-label">字</span></div>
+                  <div class="stat"><span class="stat-num">${paragraphCount}</span><span class="stat-label">段</span></div>
+                  <div class="stat"><span class="stat-num">${imageCount}</span><span class="stat-label">图</span></div>
+                </div>
+              </div>
+              <div class="item-footer">
+                <div class="item-meta">
+                  <span class="update-time">最后更新: ${window.PublishView.formatDate(article.updatedAt)}</span>
+                  <span class="word-count">${wordCount} 字</span>
                 </div>
                 <div class="item-actions">
-                        <button class="btn btn-secondary re-edit-btn" title="移回草稿仓重新编辑">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            重新编辑
-                        </button>
-                        <button class="btn btn-primary copy-content-btn" title="复制内容">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            复制
-                        </button>
-                        <button class="btn btn-danger delete-published-btn" title="删除已发布文章">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3,6 5,6 21,6"></polyline>
-                                <path d="M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                            </svg>
-                        </button>
+                  <button class="btn btn-secondary preview-btn" title="预览文章">预览</button>
+                  <button class="btn btn-primary copy-content-btn" title="复制内容">复制</button>
+                  <button class="btn btn-accent re-edit-btn" title="返回草稿仓修改">修改</button>
+                </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
             window.Logger.debug(`Rendered ${publishedArticles.length} published articles`);
         } catch (error) {
@@ -172,21 +169,92 @@ window.PublishView = {
             const articleId = listItem.dataset.articleId;
             if (!articleId) return;
 
-            // 重新编辑
-            if (event.target.closest('.re-edit-btn')) {
-                window.PublishView.handleReEditArticle(articleId);
+            // 预览文章
+            if (event.target.closest('.preview-btn')) {
+                window.PublishView.handlePreviewArticle(articleId);
             }
             // 复制内容
             else if (event.target.closest('.copy-content-btn')) {
                 window.PublishView.handleCopyContent(articleId);
             }
-            // 删除已发布文章
-            else if (event.target.closest('.delete-published-btn')) {
-                window.PublishView.handleDeletePublished(articleId);
+            // 返回草稿仓修改
+            else if (event.target.closest('.re-edit-btn')) {
+                window.PublishView.handleReEditArticle(articleId);
             }
         } catch (error) {
             window.Logger.error('处理列表项点击失败', error);
             window.PublishView.showError('操作失败，请重试');
+        }
+    },
+
+    /**
+     * 处理预览文章
+     */
+    handlePreviewArticle: (articleId) => {
+        try {
+            const article = window.publishService.getPublished().find(a => a.id === articleId);
+            if (!article) {
+                throw new Error('文章未找到');
+            }
+
+            // 创建预览模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content preview-modal">
+                    <div class="modal-header">
+                        <h3>${window.PublishView.escapeHtml(article.title)}</h3>
+                        <button class="modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="preview-content">${article.content}</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary copy-from-preview" data-article-id="${article.id}">复制内容</button>
+                        <button class="btn btn-accent edit-from-preview" data-article-id="${article.id}">返回修改</button>
+                        <button class="btn btn-secondary close-preview">关闭</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // 绑定预览模态框事件
+            const closeModal = () => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            };
+
+            modal.querySelector('.modal-close-btn').onclick = closeModal;
+            modal.querySelector('.close-preview').onclick = closeModal;
+            modal.onclick = (e) => {
+                if (e.target === modal) closeModal();
+            };
+
+            // 复制按钮
+            modal.querySelector('.copy-from-preview').onclick = () => {
+                window.PublishView.handleCopyContent(articleId);
+            };
+
+            // 修改按钮
+            modal.querySelector('.edit-from-preview').onclick = () => {
+                closeModal();
+                window.PublishView.handleReEditArticle(articleId);
+            };
+
+            // ESC键关闭
+            const escapeHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+
+            window.Logger.debug('文章预览已打开:', article.title);
+        } catch (error) {
+            window.Logger.error('预览文章失败:', error);
+            window.PublishView.showError(error.message || '预览失败');
         }
     },
 
@@ -273,35 +341,6 @@ window.PublishView = {
         } catch (error) {
             window.Logger.error('复制内容失败:', error);
             window.PublishView.showError('复制失败，请手动复制');
-        }
-    },
-
-    /**
-     * 处理删除已发布文章
-     */
-    handleDeletePublished: (articleId) => {
-        try {
-            const article = window.publishService.getPublished().find(a => a.id === articleId);
-            if (!article) {
-                throw new Error('文章未找到');
-            }
-
-            if (!confirm(`确定要删除已发布的文章 "${article.title}" 吗？此操作不可撤销。`)) {
-                return;
-            }
-
-            // 删除已发布文章
-                    window.publishService.deletePublished(articleId);
-            
-            // 重新渲染
-            window.PublishView.render();
-            
-            // 显示成功消息
-            window.PublishView.showSuccess(`文章 "${article.title}" 已删除`);
-            window.Logger.debug('已发布文章删除成功:', article.title);
-        } catch (error) {
-            window.Logger.error('删除已发布文章失败:', error);
-            window.PublishView.showError(error.message || '删除文章失败');
         }
     },
 

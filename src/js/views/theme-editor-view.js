@@ -218,8 +218,14 @@ window.ThemeEditorView = {
                 window.Logger.debug(`Updated theme style: ${fieldName} = ${value}`);
             }
 
-            // 更新预览
-            window.ThemeEditorView.updatePreview();
+            // 使用节流更新预览，防止频繁更新导致卡死
+            if (window.PerformanceMonitor) {
+                window.PerformanceMonitor.throttle(() => {
+                    window.ThemeEditorView.updatePreview();
+                }, window.QulomeConfig?.performance?.previewUpdateDelay || 300)();
+            } else {
+                window.ThemeEditorView.updatePreview();
+            }
         } catch (error) {
             window.Logger.error('Failed to handle input change', error);
         }
@@ -232,16 +238,35 @@ window.ThemeEditorView = {
         try {
             const theme = window.ThemeEditorView.currentTheme;
             if (!theme) return;
-
             const previewPane = document.getElementById('theme-preview-pane');
             if (!previewPane) return;
-
+            // 结构：h1/h2/h3前后加span用于左右竖线
+            previewPane.innerHTML = `
+                <h1>
+                  <span class="h1-decor left" style="display:${theme.styles['--h1-border-left-show']==='none'?'none':'inline-block'}"></span>
+                  这是主标题样式 H1
+                  <span class="h1-decor right" style="display:${theme.styles['--h1-border-right-show']==='inline-block'?'inline-block':'none'}"></span>
+                </h1>
+                <h2>
+                  <span class="h2-decor left" style="display:${theme.styles['--h2-border-left-show']==='none'?'none':'inline-block'}"></span>
+                  这是章节标题样式 H2
+                  <span class="h2-decor right" style="display:${theme.styles['--h2-border-right-show']==='inline-block'?'inline-block':'none'}"></span>
+                </h2>
+                <h3>
+                  <span class="h3-decor left" style="display:${theme.styles['--h3-border-left-show']==='none'?'none':'inline-block'}"></span>
+                  这是小节标题样式 H3
+                  <span class="h3-decor right" style="display:${theme.styles['--h3-border-right-show']==='inline-block'?'inline-block':'none'}"></span>
+                </h3>
+                <p>这是正文段落样式。微信文章排版需要考虑移动端阅读体验，字体大小、行高、颜色对比度都很重要。这里有一个<a href="#">链接样式</a>的示例，还有<strong>相体强调</strong>和<em>斜体强调</em>。</p>
+                <blockquote>这是引用块的样式示例。引用内容应与正文有明显的视觉区分，通常使用左侧竖线和背景色。</blockquote>
+                <ul><li>这是无序列表项目一</li><li>这是无序列表项目二</li></ul>
+                <ol><li>这是有序列表项目一</li><li>这是有序列表项目二</li></ol>
+                <hr />
+            `;
             // 应用主题样式到预览区域
             Object.entries(theme.styles).forEach(([key, value]) => {
                 previewPane.style.setProperty(key, value);
             });
-
-            window.Logger.debug('Preview updated');
         } catch (error) {
             window.Logger.error('Failed to update preview', error);
         }

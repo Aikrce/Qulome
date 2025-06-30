@@ -294,7 +294,7 @@ class ThemeService {
     }
 }
 
-window.themeService = new ThemeService();
+window.themeService = new ThemeService(); 
 
 if (typeof window !== 'undefined') {
     cleanInvalidThemes();

@@ -88,6 +88,7 @@ window.EditorView = {
     justImportedDraftId: null,
     isInitialized: false,
     eventHandlers: new Map(), // Track event handlers for cleanup
+    autoSaveHandler: null, // Track auto-save handler
 
     /**
      * Initialize the editor view
@@ -98,13 +99,13 @@ window.EditorView = {
                 window.Logger.debug('EditorView already initialized, skipping...');
                 return;
             }
-
+            
+            window.EditorView.currentDraftId = window.draftService.getCurrentDraftId();
             window.EditorView.initializeQuillEditor();
             window.EditorView.loadCurrentDraft();
             window.EditorView.setupAutoSave();
             window.EditorView.setupActionButtons();
             window.EditorView.setupBottomButtons();
-            
             window.EditorView.isInitialized = true;
             window.Logger.debug('EditorView initialized successfully');
         } catch (error) {
@@ -117,6 +118,12 @@ window.EditorView = {
      * Clean up event handlers and resources
      */
     cleanup: () => {
+        // Remove auto-save handler
+        if (window.EditorView.autoSaveHandler && window.EditorView.quillInstance) {
+            window.EditorView.quillInstance.off('text-change', window.EditorView.autoSaveHandler);
+            window.EditorView.autoSaveHandler = null;
+        }
+        
         // Remove all tracked event handlers
         window.EditorView.eventHandlers.forEach((handler, element) => {
             if (element && typeof element.removeEventListener === 'function') {
@@ -154,8 +161,8 @@ window.EditorView = {
             throw new Error('Editor container not found');
         }
 
-        // Only initialize if not already done or if container is empty
-        if (!window.EditorView.quillInstance || !document.querySelector('#editor-container .ql-editor')) {
+        // Only initialize if not already done
+        if (!window.EditorView.quillInstance) {
             const toolbarOptions = [
                 ['bold', 'italic', 'underline'],
                 [{ 'header': [1, 2, 3, false] }],
@@ -163,7 +170,7 @@ window.EditorView = {
                 [{ 'color': [] }],
                 ['blockquote', 'code-block', {'list': 'ordered'}, {'list': 'bullet'}],
                 [{ 'indent': '-1'}, { 'indent': '+1' }],
-                ['link', 'image']
+                ['link', 'image', 'imageGroup']
             ];
 
             window.EditorView.quillInstance = new Quill('#editor-container', {
@@ -178,6 +185,9 @@ window.EditorView = {
                 toolbar.addHandler('insertIcon', () => {
                     openIconSelectionModal(window.EditorView.quillInstance);
                 });
+                toolbar.addHandler('imageGroup', () => {
+                    openImageGroupModal(window.EditorView.quillInstance);
+                });
             }
         }
     },
@@ -190,14 +200,30 @@ window.EditorView = {
             window.EditorView.currentDraftId = window.draftService.getCurrentDraftId();
             
             if (!window.EditorView.currentDraftId) {
-                const newDraft = window.draftService.createDraft('');
-                window.EditorView.currentDraftId = newDraft.id;
-                window.draftService.setCurrentDraftId(window.EditorView.currentDraftId);
+                // 如果没有当前草稿ID，创建新的空草稿
+                const newDraft = window.draftService.createDraft('<p><br></p>');
+                if (newDraft) {
+                    window.EditorView.currentDraftId = newDraft.id;
+                    window.draftService.setCurrentDraftId(window.EditorView.currentDraftId);
+                } else {
+                    window.Logger.warn('创建新草稿失败');
+                    return;
+                }
             }
 
+            // 确保草稿存在
             const draft = window.draftService.getDraft(window.EditorView.currentDraftId);
             if (draft && draft.content && window.EditorView.quillInstance) {
                 window.EditorView.quillInstance.root.innerHTML = draft.content;
+                window.Logger.debug('草稿内容已载入到编辑器:', draft.title);
+            } else if (!draft) {
+                // 如果草稿不存在，创建新的
+                window.Logger.warn('当前草稿不存在，创建新草稿');
+                const newDraft = window.draftService.createDraft('<p><br></p>');
+                if (newDraft) {
+                    window.EditorView.currentDraftId = newDraft.id;
+                    window.draftService.setCurrentDraftId(window.EditorView.currentDraftId);
+                }
             }
         } catch (error) {
             window.Logger.error('Failed to load current draft', error);
@@ -211,9 +237,34 @@ window.EditorView = {
     setupAutoSave: () => {
         if (!window.EditorView.quillInstance) return;
 
+        // Remove existing auto-save handler if any
+        if (window.EditorView.autoSaveHandler) {
+            window.EditorView.quillInstance.off('text-change', window.EditorView.autoSaveHandler);
+        }
+
         const autoSave = debounce((content) => {
             try {
+                // 确保有有效的当前草稿ID
+                if (!window.EditorView.currentDraftId) {
+                    const newDraft = window.draftService.createDraft(content);
+                    if (newDraft) {
+                        window.EditorView.currentDraftId = newDraft.id;
+                        window.draftService.setCurrentDraftId(newDraft.id);
+                    }
+                    return;
+                }
+
                 const current = window.draftService.getDraft(window.EditorView.currentDraftId);
+                if (!current) {
+                    // 如果当前草稿不存在，创建新的
+                    const newDraft = window.draftService.createDraft(content);
+                    if (newDraft) {
+                        window.EditorView.currentDraftId = newDraft.id;
+                        window.draftService.setCurrentDraftId(newDraft.id);
+                    }
+                    return;
+                }
+
                 const draftToSave = {
                     ...current,
                     title: window.EditorView.extractTitleFromContent(content),
@@ -227,10 +278,13 @@ window.EditorView = {
             }
         }, window.QulomeConfig?.performance?.debounceDelay || 2000);
 
-        window.EditorView.quillInstance.on('text-change', () => {
+        // Store the handler reference for cleanup
+        window.EditorView.autoSaveHandler = () => {
             const content = window.EditorView.quillInstance.root.innerHTML;
             autoSave(content);
-        });
+        };
+
+        window.EditorView.quillInstance.on('text-change', window.EditorView.autoSaveHandler);
     },
 
     /**
@@ -266,16 +320,14 @@ window.EditorView = {
      * Setup bottom buttons (Save, Discard, etc.)
      */
     setupBottomButtons: () => {
-        // Implementation for bottom buttons if they exist
         const saveBtn = document.getElementById('save-draft-btn');
         const discardBtn = document.getElementById('discard-draft-btn');
-
+        
         if (saveBtn) {
             window.EditorView.addEventHandler(saveBtn, 'click', () => {
                 window.EditorView.handleSaveDraft();
             });
         }
-
         if (discardBtn) {
             window.EditorView.addEventHandler(discardBtn, 'click', () => {
                 window.EditorView.handleDiscardDraft();
@@ -287,16 +339,16 @@ window.EditorView = {
      * Handle Markdown file import
      */
     handleMarkdownImport: () => {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.md, .markdown';
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.md, .markdown';
         
         window.EditorView.addEventHandler(fileInput, 'change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+                const file = event.target.files[0];
+                if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
                 try {
                     let markdownText = e.target.result;
                     markdownText = markdownText.replace(/([\r\n]+\s*){2,}/g, '\n\n');
@@ -317,16 +369,16 @@ window.EditorView = {
                     window.Logger.error('Failed to import markdown', error);
                     window.EditorView.showError('导入 Markdown 文件失败');
                 }
-            };
+                };
             
             reader.onerror = () => {
                 window.EditorView.showError('读取文件时出错');
             };
             
-            reader.readAsText(file);
+                reader.readAsText(file);
         });
         
-        fileInput.click();
+            fileInput.click();
     },
 
     /**
@@ -381,6 +433,25 @@ window.EditorView = {
             window.EditorView.showError('复制失败，请手动选择和复制内容');
         }
     },
+    
+    /**
+     * 校验 currentDraftId 是否有效，无效则新建空草稿
+     */
+    ensureValidCurrentDraftId: function() {
+        const drafts = window.draftService.getDrafts();
+        let currentId = window.draftService.getCurrentDraftId();
+        if (!currentId || !drafts.some(d => d.id === currentId)) {
+            if (drafts.length > 0) {
+                window.draftService.setCurrentDraftId(drafts[0].id);
+                return drafts[0].id;
+            } else {
+                const newDraft = window.draftService.createDraft('<p><br></p>');
+                window.draftService.setCurrentDraftId(newDraft.id);
+                return newDraft.id;
+            }
+        }
+        return currentId;
+    },
 
     /**
      * Handle manual draft save
@@ -388,29 +459,37 @@ window.EditorView = {
     handleSaveDraft: () => {
         try {
             const content = window.EditorView.quillInstance.root.innerHTML;
-            const current = window.draftService.getDraft(window.EditorView.currentDraftId);
-            const draftToSave = {
-                ...current,
-                title: window.EditorView.extractTitleFromContent(content),
-                content: content,
-                updatedAt: new Date().toISOString()
-            };
-            window.draftService.saveDraft(draftToSave);
-            alert('草稿已保存！');
-
-            // 保存后自动新建空草稿并切换
-            const newDraft = window.draftService.createDraft('');
-            window.EditorView.currentDraftId = newDraft.id;
-            window.draftService.setCurrentDraftId(newDraft.id);
-            window.EditorView.quillInstance.root.innerHTML = '';
-
-            // 清理 orphan 草稿
-            if (typeof window.draftService.cleanOrphanDrafts === 'function') {
-                window.draftService.cleanOrphanDrafts();
+            
+            // 检查内容是否为空
+            const plainText = content.replace(/<[^>]+>/g, '').trim();
+            if (!plainText) {
+                window.EditorView.showError('请先输入内容再保存');
+                return;
             }
+            
+            // 创建新的草稿
+            const newDraft = window.draftService.createDraft(content);
+            if (!newDraft) {
+                throw new Error('创建草稿失败');
+            }
+            
+            // 显示保存成功消息
+            alert('草稿已保存到草稿仓！');
+            
+            // 清空编辑器并创建新的空草稿
+            window.EditorView.quillInstance.root.innerHTML = '<p><br></p>';
+            
+            // 创建新的空草稿作为当前编辑的草稿
+            const emptyDraft = window.draftService.createDraft('<p><br></p>');
+            if (emptyDraft) {
+                window.EditorView.currentDraftId = emptyDraft.id;
+                window.draftService.setCurrentDraftId(emptyDraft.id);
+            }
+            
+            window.Logger.debug('Draft saved successfully and editor cleared');
         } catch (error) {
             window.Logger.error('Failed to save draft manually', error);
-            window.EditorView.showError('保存草稿失败');
+            window.EditorView.showError(error.message || '保存草稿失败，请重试');
         }
     },
 
@@ -420,20 +499,21 @@ window.EditorView = {
     handleDiscardDraft: () => {
         if (confirm('确定要丢弃当前草稿吗？此操作不可撤销。')) {
             try {
-                window.draftService.deleteDraft(window.EditorView.currentDraftId);
-                const newDraft = window.draftService.createDraft('');
+                window.EditorView.currentDraftId = window.EditorView.ensureValidCurrentDraftId();
+                const current = window.draftService.getDraft(window.EditorView.currentDraftId);
+                if (!current) throw new Error('当前草稿不存在，已自动新建空草稿');
+                    window.draftService.deleteDraft(window.EditorView.currentDraftId);
+                const newDraft = window.draftService.createDraft('<p><br></p>');
                 window.EditorView.currentDraftId = newDraft.id;
                 window.draftService.setCurrentDraftId(newDraft.id);
                 window.EditorView.quillInstance.root.innerHTML = '';
                 window.Logger.debug('Draft discarded successfully');
-
-                // 清理 orphan 草稿
                 if (typeof window.draftService.cleanOrphanDrafts === 'function') {
                     window.draftService.cleanOrphanDrafts();
                 }
             } catch (error) {
                 window.Logger.error('Failed to discard draft', error);
-                window.EditorView.showError('丢弃草稿失败');
+                window.EditorView.showError(error.message || '丢弃草稿失败，请刷新页面重试');
             }
         }
     },
@@ -460,4 +540,159 @@ window.EditorView = {
         }
         return title || '无标题草稿';
     }
-}; 
+};
+
+// 预留图片组插入弹窗和处理逻辑
+function openImageGroupModal(quill) {
+    // 创建弹窗结构
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content image-group-modal">
+            <h3 class="modal-title">插入图片组</h3>
+            <input type="file" id="image-group-upload" accept="image/*" multiple style="margin-bottom:12px;">
+            <div id="image-group-list" class="image-group-list"></div>
+            <div style="margin:12px 0;">
+                <label>对齐：</label>
+                <select id="image-group-align">
+                    <option value="center">居中</option>
+                    <option value="left">左对齐</option>
+                    <option value="right">右对齐</option>
+                </select>
+                <label style="margin-left:12px;">圆角：</label>
+                <input type="number" id="image-group-radius" min="0" max="32" value="8" style="width:48px;">
+            </div>
+            <button id="image-group-insert-btn" class="btn btn-primary" disabled>插入图片组</button>
+            <button class="modal-close-btn">取消</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    let images = [];
+    const list = modal.querySelector('#image-group-list');
+    const upload = modal.querySelector('#image-group-upload');
+    const insertBtn = modal.querySelector('#image-group-insert-btn');
+    const alignSel = modal.querySelector('#image-group-align');
+    const radiusInput = modal.querySelector('#image-group-radius');
+
+    function renderList() {
+        list.innerHTML = images.map((img, i) => `
+            <div class="image-group-item">
+                <img src="${img.src}" alt="${img.alt || ''}" style="max-width:80px;max-height:60px;border-radius:4px;">
+                <input type="text" placeholder="描述(alt)" value="${img.alt || ''}" data-idx="${i}" class="image-alt-input">
+                <button class="btn btn-xs btn-danger image-del-btn" data-idx="${i}">删除</button>
+                ${i>0?'<button class="btn btn-xs image-move-left" data-idx="'+i+'">←</button>':''}
+                ${i<images.length-1?'<button class="btn btn-xs image-move-right" data-idx="'+i+'">→</button>':''}
+            </div>
+        `).join('');
+        insertBtn.disabled = images.length<1;
+    }
+
+    upload.onchange = (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                images.push({src: ev.target.result, alt: ''});
+                renderList();
+            };
+            reader.readAsDataURL(file);
+        });
+        upload.value = '';
+    };
+    list.onclick = (e) => {
+        if (e.target.classList.contains('image-del-btn')) {
+            const idx = +e.target.dataset.idx;
+            images.splice(idx,1);
+            renderList();
+        } else if (e.target.classList.contains('image-move-left')) {
+            const idx = +e.target.dataset.idx;
+            if(idx>0){
+                [images[idx-1],images[idx]]=[images[idx],images[idx-1]];
+                renderList();
+                    }
+        } else if (e.target.classList.contains('image-move-right')) {
+            const idx = +e.target.dataset.idx;
+            if(idx<images.length-1){
+                [images[idx+1],images[idx]]=[images[idx],images[idx+1]];
+                renderList();
+            }
+        }
+    };
+    list.oninput = (e) => {
+        if (e.target.classList.contains('image-alt-input')) {
+            const idx = +e.target.dataset.idx;
+            images[idx].alt = e.target.value;
+        }
+    };
+    insertBtn.onclick = () => {
+        const align = alignSel.value;
+        const radius = radiusInput.value;
+        const data = {
+            images,
+            align,
+            borderRadius: radius
+        };
+        // 插入特殊div，data-images序列化
+        const html = `<div class="ql-image-group" data-images='${JSON.stringify(data)}'></div>`;
+        const range = quill.getSelection(true);
+        quill.clipboard.dangerouslyPasteHTML(range.index, html);
+        closeModal();
+    };
+    function closeModal() {
+        document.body.removeChild(modal);
+    }
+    modal.querySelector('.modal-close-btn').onclick = closeModal;
+    modal.onclick = (e) => { if(e.target===modal) closeModal(); };
+    document.addEventListener('keydown', function esc(e){
+        if(e.key==='Escape'){ closeModal(); document.removeEventListener('keydown',esc); }
+    });
+}
+
+// 实时渲染图片组为横滑结构
+function renderAllImageGroups(container) {
+    const groups = container.querySelectorAll('.ql-image-group');
+    groups.forEach(group => {
+        // 避免重复渲染
+        if (group._rendered) return;
+        let data;
+        try {
+            data = JSON.parse(group.getAttribute('data-images'));
+        } catch (e) { return; }
+        if (!data || !Array.isArray(data.images) || data.images.length === 0) return;
+        // 清空内容
+        group.innerHTML = '';
+        // 设置对齐
+        group.classList.remove('align-left','align-center','align-right');
+        group.classList.add('align-' + (data.align || 'center'));
+        // 设置圆角和间距
+        group.style.setProperty('--image-group-gap', (data.gap||12)+ 'px');
+        group.style.setProperty('--image-group-radius', (data.borderRadius||8)+ 'px');
+        // 生成图片轮播
+        const carousel = document.createElement('div');
+        carousel.className = 'image-carousel';
+        data.images.forEach(img => {
+            const image = document.createElement('img');
+            image.src = img.src;
+            image.alt = img.alt || '';
+            carousel.appendChild(image);
+        });
+        group.appendChild(carousel);
+        // 生成指示点
+        if (data.images.length > 1) {
+            const dots = document.createElement('div');
+            dots.className = 'carousel-dots';
+            dots.innerHTML = data.images.map((_,i)=>'<span>●</span>').join(' ');
+            group.appendChild(dots);
+        }
+        group._rendered = true;
+    });
+}
+// 编辑器内容变化时自动渲染图片组
+if (window.EditorView && window.EditorView.quillInstance) {
+    window.EditorView.quillInstance.on('text-change', function() {
+        renderAllImageGroups(window.EditorView.quillInstance.root);
+    });
+    // 首次渲染
+    renderAllImageGroups(window.EditorView.quillInstance.root);
+} 

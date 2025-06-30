@@ -111,7 +111,7 @@ window.IconsView = {
             <div class="icon-card" data-icon-id="${icon.id}">
                     <button class="icon-card-delete delete-icon-btn" title="删除图标">&times;</button>
                     <div class="icon-preview" title="${window.IconsView.escapeHtml(icon.name)}">
-                        ${icon.svg}
+                        ${(icon.svg || icon.originalSvg) ? (icon.svg || icon.originalSvg) : ''}
                     </div>
                     <p class="icon-name">${window.IconsView.escapeHtml(icon.name)}</p>
                 <div class="icon-actions">
@@ -126,18 +126,20 @@ window.IconsView = {
                                 </svg>
                                 调色
                             </button>
-                            <input type="color" class="icon-color-input" data-icon-id="${icon.id}" value="#000000">
+                            <input type="color" class="icon-color-input" data-icon-id="${icon.id}" value="${icon.color || '#222'}" />
                         </div>
-                        <button class="btn btn-secondary copy-svg-btn" title="复制SVG代码">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                            复制
+                        <button class="btn btn-secondary toggle-color-mode-btn" data-icon-id="${icon.id}" title="切换改色模式">
+                            ${icon.colorMode === 'fill' ? '内部改色' : '主线条改色'}
                         </button>
                 </div>
             </div>
         `).join('');
+        // 强制刷新所有input[type=color]的value，彻底消除历史污染
+        grid.querySelectorAll('.icon-color-input').forEach(input => {
+            const iconId = input.dataset.iconId;
+            const icon = icons.find(i => i.id === iconId);
+            if (icon) input.value = icon.color || '#222';
+        });
 
             window.Logger.debug(`Rendered ${icons.length} icons`);
         } catch (error) {
@@ -169,6 +171,11 @@ window.IconsView = {
 
             // Bind icon operations (copy, edit, delete) using event delegation
             window.IconsView.addEventHandler(grid, 'click', (event) => {
+                if (event.target.classList.contains('toggle-color-mode-btn')) {
+                    const iconId = event.target.dataset.iconId;
+                    window.IconsView.handleToggleColorMode(iconId, event.target);
+            return;
+        }
                 window.IconsView.handleIconCardClick(event);
             });
             
@@ -264,7 +271,7 @@ window.IconsView = {
             } catch (error) {
                 window.Logger.error('添加图标失败:', error);
             window.IconsView.showError(error.message || '添加图标失败');
-            
+
             // Highlight error inputs
             const nameInput = document.getElementById('icon-name');
             const svgInput = document.getElementById('icon-svg');
@@ -347,12 +354,14 @@ window.IconsView = {
             
             if (!iconId || !newColor) {
                 throw new Error('缺少图标ID或颜色值');
-            }
+                }
 
             window.Logger.debug(`Updating color for icon ${iconId} to ${newColor}`);
             
             // 使用 icon-service 中的新颜色处理逻辑
-            const updatedIcon = window.iconService.updateIconColor(iconId, newColor);
+            const icon = window.iconService.getIcon(iconId);
+            const mode = icon && icon.colorMode ? icon.colorMode : 'main';
+            const updatedIcon = window.iconService.updateIconColor(iconId, newColor, mode);
             
             if (updatedIcon) {
                 // 重新渲染图标网格以显示更新后的颜色
@@ -473,7 +482,7 @@ window.IconsView = {
      */
     handleDeleteIcon: (iconId) => {
         try {
-            const icon = window.iconService.getIcon(iconId);
+                const icon = window.iconService.getIcon(iconId);
             if (!icon) {
                 throw new Error('图标未找到');
             }
@@ -482,8 +491,8 @@ window.IconsView = {
                 return;
             }
 
-            window.iconService.deleteIcon(iconId);
-            window.IconsView.render();
+                    window.iconService.deleteIcon(iconId);
+                    window.IconsView.render();
             window.IconsView.showSuccess(`图标 "${icon.name}" 已删除`);
             window.Logger.debug('图标删除成功:', icon.name);
         } catch (error) {
@@ -505,7 +514,7 @@ window.IconsView = {
         if (value.length > 50) {
             input.classList.add('error');
             return;
-        }
+    }
         
         // Check for duplicate names
         if (value) {
@@ -558,5 +567,24 @@ window.IconsView = {
         } catch (error) {
             return false;
         }
+    },
+
+    /**
+     * Handle toggling color mode for an icon
+     */
+    handleToggleColorMode: (iconId, btn) => {
+        const icon = window.iconService.getIcon(iconId);
+        if (!icon) return;
+        const newMode = icon.colorMode === 'fill' ? 'main' : 'fill';
+        // 只更新 colorMode，不改色值
+        const icons = window.iconService.getIcons();
+        const idx = icons.findIndex(i => i.id === iconId);
+        if (idx > -1) {
+            icons[idx].colorMode = newMode;
+            window.localStorage.setItem('qulome_icons', JSON.stringify(icons));
+        }
+        // 重新渲染，按钮文本会自动切换
+        window.IconsView.render();
+        window.IconsView.showSuccess(`已切换为${newMode === 'fill' ? '内部改色' : '主线条改色'}模式`);
     },
 }; 

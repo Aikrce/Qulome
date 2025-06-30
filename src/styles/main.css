@@ -63,19 +63,29 @@
     /* UI Elements */
     --border-radius-sm: 4px;
     --border-radius-md: 6px;
-    --border-radius-lg: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     
     /* Breakpoints */
     --mobile-breakpoint: 768px;
     --tablet-breakpoint: 1024px;
+
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-sm: 0.95rem;
 }
 
 /* 2. Global Styles
 ------------------------- */
 *, *::before, *::after {
     box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    min-height: 100vh;
 }
 
 body {
@@ -459,14 +469,44 @@ a:focus {
 /* Welcome View */
 .welcome-view {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    min-height: 100dvh; /* 动态视口高度，更好的移动端支持 */
     text-align: center;
-    padding: 2rem;
-    box-sizing: border-box;
+    padding-left: 5vw;
+    padding-right: 5vw;
+}
+
+.welcome-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 640px;
+    width: 100%;
+    gap: 2.5rem;
+    margin: 0 auto;
+    transition: margin-left 0.3s;
+}
+
+@media (min-width: 1200px) {
+    .welcome-center {
+        margin-left: 10vw;
+    }
+}
+
+.welcome-center h1,
+.welcome-center p,
+.welcome-center .welcome-buttons {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.welcome-center .welcome-buttons {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
 }
 
 .welcome-view h1 {
@@ -480,12 +520,14 @@ a:focus {
 }
 
 .welcome-view p {
-    font-size: clamp(1rem, 3vw, 1.25rem); /* 响应式字体大小 */
+    width: 100%;
+    max-width: 600px;
     margin: 0 0 3rem 0;
     color: var(--text-secondary-color);
-    max-width: 600px;
     line-height: 1.6;
     font-weight: 400;
+    text-align: center;
+    display: block;
 }
 
 .welcome-buttons {

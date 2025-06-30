@@ -502,8 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.Logger.error('Theme not found for editor', themeId);
                     alert('主题未找到!');
                     window.location.hash = '#themes';
-                    return;
-                }
+            return;
+        }
                 window.Logger.debug(`Editing theme: ${theme.name} (${themeId})`);
                 
                 // 显示主题编辑器视图
@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         renderCurrentView(fullHash); // Pass the full hash to renderCurrentView
         updateActiveLink(hash); // Use the base route for the active link
-        
+
         window.Logger.debug('Route change handling completed');
     }
 

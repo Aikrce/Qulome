@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="src/styles/drafts-view.css">
     <link rel="stylesheet" href="src/styles/publish-view.css">
     
-    <!-- External Dependencies -->
+    <!-- External Dependencies - 只保留一份，避免重复加载 -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -33,11 +33,13 @@
         </nav>
         <main id="main-content" class="main-content">
             <div id="welcome-view" class="welcome-view">
+                <div class="welcome-center">
                 <h1>κύλημα</h1>
                 <p>文字可以很美</p>
                 <div class="welcome-buttons">
                     <a href="#themes" class="btn">选择模版</a>
                     <a href="#editor" class="btn">直接开始</a>
+                    </div>
                 </div>
             </div>
             <div id="editor-view" class="editor-view" style="display:none;">
@@ -241,12 +243,9 @@
         </main>
     </div>
 
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
-
     <!-- App Services -->
     <script src="src/js/config.js"></script>
+    <script src="src/js/utils/performance-monitor.js"></script>
     <script src="src/js/theme-service.js"></script>
     <script src="src/js/draft-service.js"></script>
     <script src="src/js/publish-service.js"></script>

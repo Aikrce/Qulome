@@ -76,10 +76,10 @@ function applyColorToSvg(svgString, color) {
         // 递归应用颜色
         function updateElementColor(element, parentHasFill, parentHasStroke) {
             // 只对主图形元素变色，不对 <rect> 变色
-            const colorTags = ['path', 'circle', 'polygon', 'line', 'polyline'];
-            let hasFill = element.hasAttribute('fill') && element.getAttribute('fill') !== 'none';
-            let hasStroke = element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none';
+            const colorTags = ['path', 'circle', 'polygon', 'ellipse', 'line', 'polyline'];
             if (colorTags.includes(element.tagName)) {
+                let hasFill = element.hasAttribute('fill') && element.getAttribute('fill') !== 'none';
+                let hasStroke = element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none';
                 if (hasFill) {
                     element.setAttribute('fill', color);
                 } else if (!hasFill && !hasStroke && parentHasFill) {
@@ -93,7 +93,7 @@ function applyColorToSvg(svgString, color) {
             }
             // 递归处理子元素
             for (let child of element.children) {
-                updateElementColor(child, hasFill || parentHasFill, hasStroke || parentHasStroke);
+                updateElementColor(child, parentHasFill, parentHasStroke);
             }
         }
         // 判断 SVG 根节点整体是实心还是虚心
@@ -112,13 +112,65 @@ function applyColorToSvg(svgString, color) {
     }
 }
 
+// 新增：只改 fill，不动 stroke，且跳过rect
+function applyColorToSvgFillOnly(svgString, color) {
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgString, 'image/svg+xml');
+        const svgElement = doc.querySelector('svg');
+        if (!svgElement) return svgString;
+        function updateFill(element) {
+            const mainTags = ['path', 'circle', 'polygon', 'ellipse', 'line', 'polyline'];
+            if (mainTags.includes(element.tagName)) {
+                // 只改 fill，不动 stroke
+                if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
+                    element.setAttribute('fill', color);
+                }
+            }
+            for (let child of element.children) updateFill(child);
+        }
+        updateFill(svgElement);
+        const serializer = new XMLSerializer();
+        return serializer.serializeToString(svgElement);
+    } catch (error) {
+        console.error('Failed to apply fill color to SVG:', error);
+        return svgString;
+    }
+}
+
+function isValidIcon(icon) {
+    if (!icon || typeof icon !== 'object') return false;
+    if (!icon.id || !icon.name || !icon.svg) return false;
+    // 简单校验 svg 格式
+    if (typeof icon.svg !== 'string' || !icon.svg.includes('<svg') || !icon.svg.includes('</svg>')) return false;
+    return true;
+}
+
+function cleanOrphanIcons() {
+    let icons = getIcons();
+    const validIcons = icons.filter(isValidIcon);
+    if (validIcons.length !== icons.length) {
+        saveIcons(validIcons);
+        if (window && window.Logger) window.Logger.info('已自动清理无效/orphan 图标');
+    }
+    return validIcons;
+}
+
+// 修改 getIcons，始终返回已清理的图标
 function getIcons() {
     const icons = localStorage.getItem(ICONS_STORAGE_KEY);
+    let arr;
     if (!icons) {
         localStorage.setItem(ICONS_STORAGE_KEY, JSON.stringify(defaultIcons));
-        return defaultIcons;
+        arr = defaultIcons;
+    } else {
+        arr = JSON.parse(icons);
     }
-    return JSON.parse(icons);
+    return cleanOrphanIconsRaw(arr);
+}
+// 内部用，避免递归死循环
+function cleanOrphanIconsRaw(arr) {
+    return Array.isArray(arr) ? arr.filter(isValidIcon) : [];
 }
 
 function saveIcons(icons) {
@@ -135,10 +187,13 @@ function addIcon(name, svg) {
         id: `icon-${new Date().getTime()}`,
         name: name,
         svg: svg,
-        color: null // New icons start without a custom color
+        originalSvg: svg,
+        color: null,
+        colorMode: 'main'
     };
     icons.push(newIcon);
     saveIcons(icons);
+    cleanOrphanIcons();
     return newIcon;
 }
 
@@ -146,6 +201,7 @@ function deleteIcon(iconId) {
     let icons = getIcons();
     icons = icons.filter(i => i.id !== iconId);
     saveIcons(icons);
+    cleanOrphanIcons();
 }
 
 function getIcon(iconId) {
@@ -157,25 +213,30 @@ function getIcon(iconId) {
  * 更新图标颜色
  * @param {string} iconId - 图标ID
  * @param {string} color - 新颜色
+ * @param {string} mode - 更新模式 ('main' 或 'fill')
  * @returns {Object|null} 更新后的图标对象
  */
-function updateIconColor(iconId, color) {
+function updateIconColor(iconId, color, mode = 'main') {
     let icons = getIcons();
     const iconIndex = icons.findIndex(i => i.id === iconId);
-    
     if (iconIndex > -1) {
         const icon = icons[iconIndex];
-        
-        // 应用颜色到SVG
-        const coloredSvg = applyColorToSvg(icon.svg, color);
-        
-        // 更新图标
+        if (!icon.originalSvg) {
+            icon.originalSvg = icon.svg;
+        }
+        let coloredSvg;
+        if (mode === 'fill') {
+            coloredSvg = applyColorToSvgFillOnly(icon.originalSvg, color);
+        } else {
+            coloredSvg = applyColorToSvg(icon.originalSvg, color);
+        }
         icons[iconIndex] = {
             ...icon,
             svg: coloredSvg,
-            color: color
+            color: color,
+            colorMode: mode,
+            originalSvg: icon.originalSvg
         };
-        
         saveIcons(icons);
         return icons[iconIndex];
     }
@@ -186,27 +247,24 @@ function updateIcon(iconId, updates) {
     let icons = getIcons();
     const iconIndex = icons.findIndex(i => i.id === iconId);
     if(iconIndex > -1) {
-        // Support both old and new parameter styles for backward compatibility
         if (typeof updates === 'string') {
-            // Old style: updateIcon(iconId, newName, newColor)
             const newName = updates;
             const newColor = arguments[2];
-            if(newName !== undefined) {
-                icons[iconIndex].name = newName;
-            }
-            if(newColor !== undefined) {
-                // 使用新的颜色处理逻辑
-                const coloredSvg = applyColorToSvg(icons[iconIndex].svg, newColor);
+        if(newName !== undefined) {
+            icons[iconIndex].name = newName;
+        }
+        if(newColor !== undefined) {
+                if (!icons[iconIndex].originalSvg) icons[iconIndex].originalSvg = icons[iconIndex].svg;
+                const coloredSvg = applyColorToSvg(icons[iconIndex].originalSvg, newColor);
                 icons[iconIndex].svg = coloredSvg;
-                icons[iconIndex].color = newColor;
+            icons[iconIndex].color = newColor;
             }
         } else if (typeof updates === 'object') {
-            // New style: updateIcon(iconId, { name, svg, color })
             Object.keys(updates).forEach(key => {
                 if (updates[key] !== undefined) {
                     if (key === 'color') {
-                        // 使用新的颜色处理逻辑
-                        const coloredSvg = applyColorToSvg(icons[iconIndex].svg, updates.color);
+                        if (!icons[iconIndex].originalSvg) icons[iconIndex].originalSvg = icons[iconIndex].svg;
+                        const coloredSvg = applyColorToSvg(icons[iconIndex].originalSvg, updates.color);
                         icons[iconIndex].svg = coloredSvg;
                         icons[iconIndex].color = updates.color;
                     } else {
@@ -229,5 +287,7 @@ window.iconService = {
     updateIcon,
     updateIconColor,
     analyzeSvgStructure,
-    applyColorToSvg
+    applyColorToSvg,
+    applyColorToSvgFillOnly,
+    cleanOrphanIcons
 }; 

@@ -14,11 +14,13 @@
     min-width: 280px;
 }
 
-.icons-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 200px);
+#icons-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
     gap: 20px;
-    justify-content: center;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .icon-card {
@@ -37,6 +39,9 @@
     transition: box-shadow 0.2s, border 0.2s, background 0.2s;
     position: relative;
     box-sizing: border-box;
+    min-width: 220px;
+    max-width: 260px;
+    flex: 0 0 auto;
 }
 .icon-card:hover {
     border: 2px solid var(--theme-color);
@@ -176,4 +181,13 @@
     background: var(--theme-color);
     color: #fff;
     border-color: var(--theme-color);
+}
+
+/* 可选：美化滚动条 */
+#icons-grid::-webkit-scrollbar {
+    height: 8px;
+}
+#icons-grid::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 4px;
 } 

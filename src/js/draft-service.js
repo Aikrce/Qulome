@@ -36,11 +36,6 @@ function extractTitleFromContent(content) {
 }
 
 function saveDraft(draft) {
-    // 校验：禁止空内容和无标题
-    if (!draft || typeof draft.content !== 'string' || !draft.content.replace(/<[^>]+>/g, '').trim()) {
-        if (window && window.Logger) window.Logger.warn('禁止保存无内容草稿', draft);
-        return;
-    }
     // 统一用 extractTitleFromContent
     draft.title = extractTitleFromContent(draft.content);
     let drafts = getDrafts();
@@ -54,12 +49,6 @@ function saveDraft(draft) {
 }
 
 function createDraft(content) {
-    // 校验：禁止创建空内容草稿
-    const plain = (content || '').replace(/<[^>]+>/g, '').trim();
-    if (!plain) {
-        if (window && window.Logger) window.Logger.warn('禁止创建无内容草稿');
-        return null;
-    }
     const drafts = getDrafts();
     const newDraft = {
         id: `draft-${new Date().getTime()}`,

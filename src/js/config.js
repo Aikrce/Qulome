@@ -72,11 +72,23 @@ window.QulomeConfig = {
         prefix: '[Qulome]'
     },
 
-    // 性能配置
+    // 性能配置 - 优化防卡死设置
     performance: {
-        debounceDelay: 300,
-        healthCheckInterval: 60000, // 1分钟
-        maxLocalStorageSize: 5 * 1024 * 1024 // 5MB
+        debounceDelay: 1000, // 减少到1秒，避免频繁保存
+        healthCheckInterval: 30000, // 减少到30秒
+        maxLocalStorageSize: 5 * 1024 * 1024, // 5MB
+        maxEventListeners: 100, // 限制事件监听器数量
+        maxAutoSaveRetries: 3, // 自动保存重试次数
+        previewUpdateDelay: 300, // 预览更新延迟
+        modalTimeout: 5000, // 模态框超时时间
+        // 防卡死机制
+        preventHang: {
+            maxExecutionTime: 1000, // 最大执行时间1秒
+            maxMemoryUsage: 50 * 1024 * 1024, // 最大内存使用50MB
+            enableWorker: false, // 暂时禁用Web Worker
+            enableThrottling: true, // 启用节流
+            throttleDelay: 100 // 节流延迟100ms
+        }
     },
 
     // UI配置
@@ -94,7 +106,13 @@ window.QulomeConfig = {
     errorHandling: {
         showUserFriendlyMessages: true,
         logErrors: true,
-        maxRetries: 3
+        maxRetries: 3,
+        // 防卡死错误处理
+        hangDetection: {
+            enabled: true,
+            timeout: 3000, // 3秒超时
+            maxConsecutiveErrors: 5 // 最大连续错误数
+        }
     },
 
     // 可访问性配置

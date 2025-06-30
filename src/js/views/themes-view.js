@@ -84,7 +84,6 @@ window.ThemesView = {
         }
 
         grid.innerHTML = themes.map(theme => {
-            // Defensive check for theme name and id
             const themeName = (theme && typeof theme.name === 'string' && theme.name) 
                 ? window.ThemesView.escapeHtml(theme.name) 
                 : '<i>无效名称</i>';
@@ -92,19 +91,27 @@ window.ThemesView = {
             if (!themeId) {
                 window.Logger.warn('渲染主题卡片时 themeId 缺失', theme);
                 return '';
-            } // Don't render cards without an ID
-
+            }
+            // 主题名称左上角，支持重命名
             return `
             <div class="theme-card ${theme.isActive ? 'active' : ''}" data-theme-id="${themeId}">
-                    ${!theme.isSystemTheme ? `<button class="theme-card-delete delete-theme-btn" title="删除主题">&times;</button>` : ''}
+                <div class="theme-card-header">
+                  <span class="theme-name" title="点击重命名" data-theme-id="${themeId}">${themeName}</span>
+                  ${!theme.isSystemTheme ? `<button class="theme-card-delete delete-theme-btn" title="删除主题">&times;</button>` : ''}
+                </div>
                 <div class="theme-preview">
-                        <div class="preview-h1" style="color: ${theme.styles['--h1-color'] || '#1F2937'};">标题样式</div>
-                        <div class="preview-p" style="color: ${theme.styles['--p-color'] || '#374151'};">正文内容样式预览...</div>
-                        <div class="preview-a" style="color: ${theme.styles['--a-color'] || '#4338CA'};">链接样式</div>
-                    </div>
-                    <div class="theme-info">
-                        <div class="theme-name">${themeName}</div>
-                        ${theme.isActive ? '<span class="theme-status">当前使用</span>' : ''}
+                  <h1 style="color: ${theme.styles['--h1-color'] || '#1F2937'};font-size:${theme.styles['--h1-font-size']||'24px'};font-weight:${theme.styles['--h1-font-weight']||'bold'};">主标题 H1</h1>
+                  <h2 style="color: ${theme.styles['--h2-color'] || '#1F2937'};font-size:${theme.styles['--h2-font-size']||'20px'};font-weight:${theme.styles['--h2-font-weight']||'bold'};">副标题 H2</h2>
+                  <h3 style="color: ${theme.styles['--h3-color'] || '#1F2937'};font-size:${theme.styles['--h3-font-size']||'18px'};font-weight:${theme.styles['--h3-font-weight']||'bold'};">三级标题 H3</h3>
+                  <p style="color: ${theme.styles['--p-color'] || '#374151'};font-size:${theme.styles['--p-font-size']||'16px'};line-height:${theme.styles['--p-line-height']||'1.7'};">正文内容样式预览，支持<b>加粗</b>、<i>斜体</i>、<a href="#" style="color:${theme.styles['--a-color']||'#4338CA'};">链接样式</a>。</p>
+                  <blockquote style="background:${theme.styles['--blockquote-bg']||'#F3F4F6'};color:${theme.styles['--blockquote-color']||'#4B5563'};border-left:4px solid ${theme.styles['--blockquote-border-color']||'#D1D5DB'};padding:8px 16px;margin:8px 0;">引用块样式预览</blockquote>
+                  <pre style="background:${theme.styles['--code-block-bg']||'#111827'};color:${theme.styles['--code-block-color']||'#E5E7EB'};padding:8px 12px;border-radius:6px;">代码块样式</pre>
+                  <ul style="padding-left:20px;"><li>无序列表样式</li><li>第二项</li></ul>
+                  <ol style="padding-left:20px;"><li>有序列表样式</li><li>第二项</li></ol>
+                  <hr style="border:none;border-top:${theme.styles['--hr-height']||'1px'} solid ${theme.styles['--hr-color']||'#D1D5DB'};margin:12px 0;" />
+                </div>
+                <div class="theme-info">
+                    ${theme.isActive ? '<span class="theme-status">当前使用</span>' : ''}
                 </div>
                 <div class="theme-actions">
                         <button class="btn btn-primary apply-theme-btn" ${theme.isActive ? 'disabled' : ''}>
@@ -119,13 +126,56 @@ window.ThemesView = {
                         </button>
                 </div>
             </div>
-        `;
+            `;
         }).join('');
 
             window.Logger.debug(`Rendered ${themes.length} themes`);
         } catch (error) {
             window.Logger.error('Failed to render themes', error);
             window.ThemesView.showError('渲染主题列表失败');
+        }
+
+        // 绑定重命名事件
+        const grid = document.getElementById('themes-grid');
+        if (grid) {
+            grid.querySelectorAll('.theme-name').forEach(nameEl => {
+                nameEl.onclick = (e) => {
+                    const themeId = nameEl.getAttribute('data-theme-id');
+                    const oldName = nameEl.textContent;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = oldName;
+                    input.className = 'theme-rename-input';
+                    input.style.fontSize = '1.1rem';
+                    input.style.fontWeight = '600';
+                    input.style.color = 'var(--text-primary)';
+                    input.style.width = '80%';
+                    nameEl.replaceWith(input);
+                    input.focus();
+                    input.select();
+                    const save = () => {
+                        const newName = input.value.trim();
+                        if (newName && newName !== oldName) {
+                            const theme = window.themeService.getTheme(themeId);
+                            if (theme) {
+                                theme.name = newName;
+                                window.themeService.updateTheme(theme);
+                                window.ThemesView.render();
+                            }
+                        } else {
+                            window.ThemesView.render();
+                        }
+                    };
+                    input.onblur = save;
+                    input.onkeydown = (ev) => {
+                        if (ev.key === 'Enter') {
+                            save();
+                        } else if (ev.key === 'Escape') {
+                            window.ThemesView.render();
+                        }
+                    };
+                };
+            });
         }
     },
 
@@ -424,26 +474,24 @@ window.ThemesView = {
                             <div class="tab-content active" data-tab="basic">
                                 <div class="form-section">
                                     <h4>主题配色</h4>
-                                    <div class="color-group">
-                                        <div class="form-row">
-                                            <label>主题色:</label>
-                                            <input type="color" id="theme-primary" value="${theme.styles['--theme-primary'] || '#0E2A73'}">
-                                            <span class="color-desc">用于重要标题和强调</span>
-                                        </div>
-                                        <div class="form-row">
-                                            <label>辅助色:</label>
-                                            <input type="color" id="theme-secondary" value="${theme.styles['--theme-secondary'] || '#E0A26F'}">
-                                            <span class="color-desc">用于装饰和次级强调</span>
-                                        </div>
-                                        <div class="form-row">
-                                            <label>正文色:</label>
-                                            <input type="color" id="text-primary" value="${theme.styles['--text-primary'] || '#333333'}">
-                                            <span class="color-desc">正文主要颜色</span>
-                                        </div>
+                                    <div class="form-row">
+                                        <label>主题色:</label>
+                                        <input type="color" id="theme-primary" value="${theme.styles['--theme-primary'] || '#0E2A73'}">
+                                        <span class="color-desc">用于重要标题和强调</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>辅助色:</label>
+                                        <input type="color" id="theme-secondary" value="${theme.styles['--theme-secondary'] || '#E0A26F'}">
+                                        <span class="color-desc">用于装饰和次级强调</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>正文色:</label>
+                                        <input type="color" id="text-primary" value="${theme.styles['--text-primary'] || '#333333'}">
+                                        <span class="color-desc">正文主要颜色</span>
                                     </div>
                                 </div>
                                 <div class="form-section">
-                                    <h4>字体设置</h4>
+                                    <h4>全局字体</h4>
                                     <div class="form-row">
                                         <label>字体族:</label>
                                         <select id="font-family">
@@ -453,60 +501,189 @@ window.ThemesView = {
                                             <option value='system-ui, -apple-system, sans-serif'>系统默认</option>
                                         </select>
                                     </div>
+                                    <div class="form-row">
+                                        <label>字号:</label>
+                                        <input type="range" id="font-size" min="14" max="20" value="${parseInt(theme.styles['--p-font-size']) || 16}">
+                                        <span class="range-value">${parseInt(theme.styles['--p-font-size']) || 16}px</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>字重:</label>
+                                        <select id="font-weight">
+                                            <option value="400">常规</option>
+                                            <option value="500">中等</option>
+                                            <option value="600">较粗</option>
+                                            <option value="700">粗体</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-section">
+                                    <h4>全局段落</h4>
+                                    <div class="form-row">
+                                        <label>行高:</label>
+                                        <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="${parseFloat(theme.styles['--p-line-height']) || 1.7}">
+                                        <span class="range-value">${parseFloat(theme.styles['--p-line-height']) || 1.7}</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>段落间距:</label>
+                                        <input type="range" id="paragraph-margin" min="8" max="32" value="${parseInt(theme.styles['--p-margin-bottom']) || 20}">
+                                        <span class="range-value">${parseInt(theme.styles['--p-margin-bottom']) || 20}px</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>对齐方式:</label>
+                                        <select id="paragraph-align">
+                                            <option value="left">左对齐</option>
+                                            <option value="center">居中</option>
+                                            <option value="right">右对齐</option>
+                                            <option value="justify" selected>两端对齐</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- 标题系统 -->
                             <div class="tab-content" data-tab="title">
+                                <!-- H1 主标题 -->
                                 <div class="form-section">
                                     <h4>H1 主标题</h4>
-                                    <div class="form-row">
-                                        <label>字体大小:</label>
-                                        <input type="range" id="h1-size" min="20" max="32" value="${parseInt(theme.styles['--h1-font-size']) || 24}">
-                                        <span class="range-value">${parseInt(theme.styles['--h1-font-size']) || 24}px</span>
-                                    </div>
                                     <div class="form-row">
                                         <label>颜色:</label>
                                         <input type="color" id="h1-color" value="${theme.styles['--h1-color'] || '#0E2A73'}">
                                     </div>
                                     <div class="form-row">
-                                        <label>字重:</label>
-                                        <select id="h1-weight">
-                                            <option value="normal">常规</option>
-                                            <option value="600" selected>中粗</option>
-                                            <option value="bold">粗体</option>
+                                        <label>字体:</label>
+                                        <select id="h1-font-family">
+                                            <option value='"Microsoft YaHei", "Helvetica Neue", sans-serif'>微软雅黑（推荐）</option>
+                                            <option value='"PingFang SC", "Helvetica Neue", sans-serif'>苹方-简</option>
+                                            <option value='"Heiti SC", "Microsoft YaHei", sans-serif'>黑体</option>
+                                            <option value='system-ui, -apple-system, sans-serif'>系统默认</option>
                                         </select>
                                     </div>
                                     <div class="form-row">
-                                        <label>对齐:</label>
-                                        <select id="h1-align">
-                                            <option value="left" selected>左对齐</option>
-                                            <option value="center">居中</option>
+                                        <label>字号:</label>
+                                        <input type="range" id="h1-size" min="20" max="40" value="${parseInt(theme.styles['--h1-font-size']) || 28}">
+                                        <span class="range-value">${parseInt(theme.styles['--h1-font-size']) || 28}px</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>行距:</label>
+                                        <input type="range" id="h1-line-height" min="1.0" max="2.0" step="0.1" value="${parseFloat(theme.styles['--h1-line-height']) || 1.3}">
+                                        <span class="range-value">${parseFloat(theme.styles['--h1-line-height']) || 1.3}</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>左右竖线:</label>
+                                        <input type="checkbox" id="h1-border-enabled">
+                                        <label for="h1-border-enabled">显示</label>
+                                        <select id="h1-border-position">
+                                            <option value="left">左</option>
+                                            <option value="right">右</option>
+                                            <option value="both">两侧</option>
+                                        </select>
+                                        <input type="color" id="h1-border-color" value="${theme.styles['--h1-border-color'] || '#0E2A73'}">
+                                        <select id="h1-border-style">
+                                            <option value="solid">实线</option>
+                                            <option value="dashed">虚线</option>
+                                            <option value="dotted">点线</option>
+                                        </select>
+                                        <select id="h1-border-width">
+                                            <option value="1">1px</option>
+                                            <option value="2">2px</option>
+                                            <option value="4">4px</option>
                                         </select>
                                     </div>
                                 </div>
+                                <!-- H2 章节标题 -->
                                 <div class="form-section">
                                     <h4>H2 章节标题</h4>
-                                    <div class="form-row">
-                                        <label>字体大小:</label>
-                                        <input type="range" id="h2-size" min="16" max="24" value="${parseInt(theme.styles['--h2-font-size']) || 20}">
-                                        <span class="range-value">${parseInt(theme.styles['--h2-font-size']) || 20}px</span>
-                                    </div>
                                     <div class="form-row">
                                         <label>颜色:</label>
                                         <input type="color" id="h2-color" value="${theme.styles['--h2-color'] || '#0E2A73'}">
                                     </div>
+                                    <div class="form-row">
+                                        <label>字体:</label>
+                                        <select id="h2-font-family">
+                                            <option value='"Microsoft YaHei", "Helvetica Neue", sans-serif'>微软雅黑（推荐）</option>
+                                            <option value='"PingFang SC", "Helvetica Neue", sans-serif'>苹方-简</option>
+                                            <option value='"Heiti SC", "Microsoft YaHei", sans-serif'>黑体</option>
+                                            <option value='system-ui, -apple-system, sans-serif'>系统默认</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>字号:</label>
+                                        <input type="range" id="h2-size" min="16" max="32" value="${parseInt(theme.styles['--h2-font-size']) || 22}">
+                                        <span class="range-value">${parseInt(theme.styles['--h2-font-size']) || 22}px</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>行距:</label>
+                                        <input type="range" id="h2-line-height" min="1.0" max="2.0" step="0.1" value="${parseFloat(theme.styles['--h2-line-height']) || 1.2}">
+                                        <span class="range-value">${parseFloat(theme.styles['--h2-line-height']) || 1.2}</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>左右竖线:</label>
+                                        <input type="checkbox" id="h2-border-enabled">
+                                        <label for="h2-border-enabled">显示</label>
+                                        <select id="h2-border-position">
+                                            <option value="left">左</option>
+                                            <option value="right">右</option>
+                                            <option value="both">两侧</option>
+                                        </select>
+                                        <input type="color" id="h2-border-color" value="${theme.styles['--h2-border-color'] || '#0E2A73'}">
+                                        <select id="h2-border-style">
+                                            <option value="solid">实线</option>
+                                            <option value="dashed">虚线</option>
+                                            <option value="dotted">点线</option>
+                                        </select>
+                                        <select id="h2-border-width">
+                                            <option value="1">1px</option>
+                                            <option value="2">2px</option>
+                                            <option value="4">4px</option>
+                                        </select>
+                                    </div>
                                 </div>
+                                <!-- H3 小节标题 -->
                                 <div class="form-section">
                                     <h4>H3 小节标题</h4>
                                     <div class="form-row">
-                                        <label>字体大小:</label>
-                                        <input type="range" id="h3-size" min="14" max="20" value="${parseInt(theme.styles['--h3-font-size']) || 18}">
+                                        <label>颜色:</label>
+                                        <input type="color" id="h3-color" value="${theme.styles['--h3-color'] || '#333333'}">
+                                    </div>
+                                    <div class="form-row">
+                                        <label>字体:</label>
+                                        <select id="h3-font-family">
+                                            <option value='"Microsoft YaHei", "Helvetica Neue", sans-serif'>微软雅黑（推荐）</option>
+                                            <option value='"PingFang SC", "Helvetica Neue", sans-serif'>苹方-简</option>
+                                            <option value='"Heiti SC", "Microsoft YaHei", sans-serif'>黑体</option>
+                                            <option value='system-ui, -apple-system, sans-serif'>系统默认</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>字号:</label>
+                                        <input type="range" id="h3-size" min="14" max="28" value="${parseInt(theme.styles['--h3-font-size']) || 18}">
                                         <span class="range-value">${parseInt(theme.styles['--h3-font-size']) || 18}px</span>
                                     </div>
                                     <div class="form-row">
-                                        <label>颜色:</label>
-                                        <input type="color" id="h3-color" value="${theme.styles['--h3-color'] || '#333333'}">
+                                        <label>行距:</label>
+                                        <input type="range" id="h3-line-height" min="1.0" max="2.0" step="0.1" value="${parseFloat(theme.styles['--h3-line-height']) || 1.1}">
+                                        <span class="range-value">${parseFloat(theme.styles['--h3-line-height']) || 1.1}</span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>左右竖线:</label>
+                                        <input type="checkbox" id="h3-border-enabled">
+                                        <label for="h3-border-enabled">显示</label>
+                                        <select id="h3-border-position">
+                                            <option value="left">左</option>
+                                            <option value="right">右</option>
+                                            <option value="both">两侧</option>
+                                        </select>
+                                        <input type="color" id="h3-border-color" value="${theme.styles['--h3-border-color'] || '#0E2A73'}">
+                                        <select id="h3-border-style">
+                                            <option value="solid">实线</option>
+                                            <option value="dashed">虚线</option>
+                                            <option value="dotted">点线</option>
+                                        </select>
+                                        <select id="h3-border-width">
+                                            <option value="1">1px</option>
+                                            <option value="2">2px</option>
+                                            <option value="4">4px</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -559,6 +736,13 @@ window.ThemesView = {
                                         <label>悬停色:</label>
                                         <input type="color" id="a-hover-color" value="${theme.styles['--a-hover-color'] || '#2C4BA3'}">
                                     </div>
+                                    <div class="form-row">
+                                        <label>链接图标:</label>
+                                        <select id="a-icon-style">
+                                            <option value="auto" selected>自动显示</option>
+                                            <option value="none">不显示</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="form-section">
                                     <h4>强调文本</h4>
@@ -571,49 +755,18 @@ window.ThemesView = {
                                         <input type="color" id="em-color" value="${theme.styles['--em-color'] || '#E0A26F'}">
                                     </div>
                                 </div>
-                                <div class="form-section">
-                                    <h4>代码样式</h4>
-                                    <div class="form-row">
-                                        <label>代码背景:</label>
-                                        <input type="color" id="code-bg" value="${theme.styles['--code-bg'] || '#F0F0F0'}">
-                                    </div>
-                                    <div class="form-row">
-                                        <label>代码文字:</label>
-                                        <input type="color" id="code-color" value="${theme.styles['--code-color'] || '#333333'}">
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- 块级元素 -->
                             <div class="tab-content" data-tab="block">
                                 <div class="form-section">
-                                    <h4>引用块样式</h4>
-                                    <div class="form-row">
-                                        <label>背景色:</label>
-                                        <input type="color" id="blockquote-bg" value="${theme.styles['--blockquote-bg'] || '#F8F9FA'}">
-                                    </div>
-                                    <div class="form-row">
-                                        <label>边框色:</label>
-                                        <input type="color" id="blockquote-border" value="${theme.styles['--blockquote-border-color'] || '#0E2A73'}">
-                                    </div>
-                                    <div class="form-row">
-                                        <label>文字色:</label>
-                                        <input type="color" id="blockquote-color" value="${theme.styles['--blockquote-color'] || '#333333'}">
-                                    </div>
-                                    <div class="form-row">
-                                        <label>内边距:</label>
-                                        <input type="range" id="blockquote-padding" min="10" max="25" value="${parseInt(theme.styles['--blockquote-padding']?.split(' ')[0]) || 15}">
-                                        <span class="range-value">${parseInt(theme.styles['--blockquote-padding']?.split(' ')[0]) || 15}px</span>
-                                    </div>
-                                </div>
-                                <div class="form-section">
-                                    <h4>代码块样式</h4>
+                                    <h4>代码块</h4>
                                     <div class="form-row">
                                         <label>背景色:</label>
                                         <input type="color" id="code-block-bg" value="${theme.styles['--code-block-bg'] || '#0A1D4E'}">
                                     </div>
                                     <div class="form-row">
-                                        <label>文字色:</label>
+                                        <label>字体色:</label>
                                         <input type="color" id="code-block-color" value="${theme.styles['--code-block-color'] || '#F8F9FA'}">
                                     </div>
                                 </div>

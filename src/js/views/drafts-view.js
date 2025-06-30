@@ -92,43 +92,42 @@ window.DraftsView = {
             return;
         }
 
-        listContainer.innerHTML = drafts.map(draft => `
+        listContainer.innerHTML = drafts.map(draft => {
+            // 统计项
+            const wordCount = window.DraftsView.getWordCount(draft.content);
+            const paragraphCount = (draft.content.match(/<p[\s>]/g)||[]).length;
+            const imageCount = (draft.content.match(/<img[\s>]/g)||[]).length;
+            return `
             <div class="list-item" data-draft-id="${draft.id}">
+              <div class="item-main">
                 <div class="item-info">
-                        <h3 class="item-title" title="${window.DraftsView.escapeHtml(draft.title)}">
-                            ${window.DraftsView.escapeHtml(draft.title)}
-                        </h3>
-                        <p class="item-meta">
-                            <span class="update-time">最后更新: ${window.DraftsView.formatDate(draft.updatedAt)}</span>
-                            <span class="word-count">${window.DraftsView.getWordCount(draft.content)} 字</span>
-                        </p>
-                        <div class="item-preview">
-                            ${window.DraftsView.getContentPreview(draft.content)}
-                        </div>
+                  <h3 class="item-title" title="${window.DraftsView.escapeHtml(draft.title)}">
+                    ${window.DraftsView.escapeHtml(draft.title)}
+                  </h3>
+                  <div class="item-preview">
+                    ${window.DraftsView.getContentPreview(draft.content)}
+                  </div>
+                </div>
+                <div class="item-stats">
+                  <div class="stat"><span class="stat-num">${wordCount}</span><span class="stat-label">字</span></div>
+                  <div class="stat"><span class="stat-num">${paragraphCount}</span><span class="stat-label">段</span></div>
+                  <div class="stat"><span class="stat-num">${imageCount}</span><span class="stat-label">图</span></div>
+                </div>
+              </div>
+              <div class="item-footer">
+                <div class="item-meta">
+                  <span class="update-time">最后更新: ${window.DraftsView.formatDate(draft.updatedAt)}</span>
+                  <span class="word-count">${wordCount} 字</span>
                 </div>
                 <div class="item-actions">
-                        <button class="btn btn-secondary load-draft-btn" title="载入到编辑器">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            载入
-                        </button>
-                        <button class="btn btn-primary publish-draft-btn" title="发布到发布仓">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                            发布
-                        </button>
-                        <button class="btn btn-danger delete-draft-btn" title="删除草稿">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3,6 5,6 21,6"></polyline>
-                                <path d="M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                            </svg>
-                        </button>
+                  <button class="btn btn-secondary load-draft-btn" title="载入到编辑器">载入</button>
+                  <button class="btn btn-primary publish-draft-btn" title="发布到发布仓">发布</button>
+                  <button class="btn btn-danger delete-draft-btn" title="删除草稿">删除</button>
+                </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
             window.Logger.debug(`Rendered ${drafts.length} drafts`);
         } catch (error) {
@@ -169,7 +168,10 @@ window.DraftsView = {
             if (!listItem) return;
 
             const draftId = listItem.dataset.draftId;
-            if (!draftId) return;
+            if (!draftId) {
+                window.Logger.error('草稿ID未找到', listItem);
+                return;
+            }
 
             // 载入草稿
             if (event.target.closest('.load-draft-btn')) {
@@ -199,8 +201,11 @@ window.DraftsView = {
                 throw new Error('草稿未找到');
             }
 
-                window.draftService.setCurrentDraftId(draftId);
-                window.location.hash = '#editor';
+            // 设置当前草稿ID
+            window.draftService.setCurrentDraftId(draftId);
+            
+            // 切换到编辑器视图
+            window.location.hash = '#editor';
             
             // 显示成功消息
             setTimeout(() => {
@@ -219,7 +224,7 @@ window.DraftsView = {
      */
     handlePublishDraft: (draftId) => {
         try {
-                const draft = window.draftService.getDraft(draftId);
+            const draft = window.draftService.getDraft(draftId);
             if (!draft) {
                 throw new Error('草稿未找到');
             }
@@ -229,15 +234,30 @@ window.DraftsView = {
             }
 
             // 添加到发布仓
-                    window.publishService.addPublished(draft);
+            if (window.publishService && typeof window.publishService.addPublished === 'function') {
+                window.publishService.addPublished(draft);
+            } else {
+                throw new Error('发布服务不可用');
+            }
             
             // 从草稿中删除
-                    window.draftService.deleteDraft(draftId);
+            window.draftService.deleteDraft(draftId);
             
             // 如果删除的是当前编辑的草稿，需要处理
             const currentDraftId = window.draftService.getCurrentDraftId();
             if (currentDraftId === draftId) {
                 window.draftService.setCurrentDraftId(null);
+                // 如果当前在编辑器视图，需要创建新草稿
+                if (window.location.hash === '#editor' && window.EditorView) {
+                    const newDraft = window.draftService.createDraft('<p><br></p>');
+                    if (newDraft) {
+                        window.draftService.setCurrentDraftId(newDraft.id);
+                        window.EditorView.currentDraftId = newDraft.id;
+                        if (window.EditorView.quillInstance) {
+                            window.EditorView.quillInstance.root.innerHTML = '';
+                        }
+                    }
+                }
             }
             
             // 重新渲染
@@ -267,7 +287,7 @@ window.DraftsView = {
             }
 
             // 删除草稿
-                    window.draftService.deleteDraft(draftId);
+            window.draftService.deleteDraft(draftId);
             
             // 如果删除的是当前编辑的草稿，需要处理
             const currentDraftId = window.draftService.getCurrentDraftId();
@@ -276,8 +296,26 @@ window.DraftsView = {
                 const remainingDrafts = window.draftService.getDrafts();
                 if (remainingDrafts.length > 0) {
                     window.draftService.setCurrentDraftId(remainingDrafts[0].id);
+                    // 如果当前在编辑器视图，需要更新编辑器状态
+                    if (window.location.hash === '#editor' && window.EditorView) {
+                        window.EditorView.currentDraftId = remainingDrafts[0].id;
+                        if (window.EditorView.quillInstance) {
+                            window.EditorView.quillInstance.root.innerHTML = remainingDrafts[0].content || '';
+                        }
+                    }
                 } else {
                     window.draftService.setCurrentDraftId(null);
+                    // 如果当前在编辑器视图，需要创建新草稿
+                    if (window.location.hash === '#editor' && window.EditorView) {
+                        const newDraft = window.draftService.createDraft('<p><br></p>');
+                        if (newDraft) {
+                            window.draftService.setCurrentDraftId(newDraft.id);
+                            window.EditorView.currentDraftId = newDraft.id;
+                            if (window.EditorView.quillInstance) {
+                                window.EditorView.quillInstance.root.innerHTML = '';
+                            }
+                        }
+                    }
                 }
             }
             
