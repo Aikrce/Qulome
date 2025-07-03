@@ -153,12 +153,18 @@ window.EditorView = {
     initializeQuillEditor: function() {
         if (this.quillInstance) return;
 
+        // Whitelist custom font sizes for the editor
+        const Size = Quill.import('attributors/style/size');
+        Size.whitelist = ['12px', '14px', false, '18px', '20px', '24px', '30px'];
+        Quill.register(Size, true);
+
         const editorContainer = document.getElementById('editor-container');
         if (!editorContainer) throw new Error('Editor container not found');
 
         const toolbarOptions = [
             ['bold', 'italic', 'underline'],
             [{ 'header': [1, 2, 3, false] }],
+            [{ 'size': ['12px', '14px', false, '18px', '20px', '24px', '30px'] }],
             [{ 'align': [] }],
             [{ 'color': [] }],
             ['blockquote', 'code-block', {'list': 'ordered'}, {'list': 'bullet'}],
