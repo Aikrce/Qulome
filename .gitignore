@@ -105,4 +105,14 @@ logs
 
 # Temporary files
 tmp/
-temp/ 
+temp/
+
+# Test files
+test-*.html
+debug.html
+
+# Development environment files
+.env.local
+
+# Build files (if needed)
+build/ 

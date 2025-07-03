@@ -1,0 +1,102 @@
+/* Theme Preview & Border System - 主题预览和竖线系统样式 */
+
+/* 标题竖线装饰 - 使用CSS类控制 */
+.preview-content h1,
+.preview-content h2,
+.preview-content h3 {
+    position: relative;
+    display: block;
+    width: fit-content;
+    margin-bottom: 0.5em;
+}
+
+/* H1 竖线基础样式 */
+.preview-content h1::before,
+.preview-content h1::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--h1-border-width, 3px);
+    background: var(--h1-border-color, #0E2A73);
+    display: none;
+}
+
+.preview-content h1::before {
+    left: -12px;
+}
+
+.preview-content h1::after {
+    right: -12px;
+}
+
+/* H2 竖线基础样式 */
+.preview-content h2::before,
+.preview-content h2::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--h2-border-width, 2px);
+    background: var(--h2-border-color, #0E2A73);
+    display: none;
+}
+
+.preview-content h2::before {
+    left: -10px;
+}
+
+.preview-content h2::after {
+    right: -10px;
+}
+
+/* H3 竖线基础样式 */
+.preview-content h3::before,
+.preview-content h3::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--h3-border-width, 2px);
+    background: var(--h3-border-color, #0E2A73);
+    display: none;
+}
+
+.preview-content h3::before {
+    left: -8px;
+}
+
+.preview-content h3::after {
+    right: -8px;
+}
+
+/* 竖线显示控制类 */
+.preview-content h1.border-left::before,
+.preview-content h1.border-both::before {
+    display: block;
+}
+
+.preview-content h1.border-right::after,
+.preview-content h1.border-both::after {
+    display: block;
+}
+
+.preview-content h2.border-left::before,
+.preview-content h2.border-both::before {
+    display: block;
+}
+
+.preview-content h2.border-right::after,
+.preview-content h2.border-both::after {
+    display: block;
+}
+
+.preview-content h3.border-left::before,
+.preview-content h3.border-both::before {
+    display: block;
+}
+
+.preview-content h3.border-right::after,
+.preview-content h3.border-both::after {
+    display: block;
+} 

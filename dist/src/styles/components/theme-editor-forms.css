@@ -1,0 +1,163 @@
+/* Theme Editor Forms - 主题编辑器表单控件样式 */
+
+.editor-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+    background: white;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary-color);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+    background-color: rgba(14, 42, 115, 0.05);
+}
+
+.tab-btn.active {
+    color: var(--theme-color);
+    border-bottom-color: var(--theme-color);
+    background-color: white;
+}
+
+.editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-section {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    margin-bottom: 24px;
+    padding: 24px;
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+
+.form-section:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.form-section h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--theme-color);
+    margin-bottom: 20px;
+    border-left: 3px solid var(--theme-color);
+    padding-left: 12px;
+    letter-spacing: 0.01em;
+}
+
+.form-row {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-row label {
+    font-weight: 500;
+    color: var(--text-color);
+    min-width: 80px;
+    font-size: 0.9rem;
+}
+
+/* 颜色选择器优化 */
+.form-section .form-row input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.form-section .form-row input[type="color"]:hover {
+    border-color: var(--theme-color);
+    transform: scale(1.05);
+}
+
+/* 范围滑块优化 */
+.form-row input[type="range"] {
+    flex: 1;
+    min-width: 120px;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+.form-row input[type="range"]:focus {
+    background: rgba(14, 42, 115, 0.2);
+}
+
+.form-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--theme-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-row input[type="range"]:hover::-webkit-slider-thumb,
+.form-row input[type="range"]:focus::-webkit-slider-thumb {
+    background: #2563eb;
+    transform: scale(1.1);
+}
+
+.form-row input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--theme-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-row input[type="range"]:hover::-moz-range-thumb,
+.form-row input[type="range"]:focus::-moz-range-thumb {
+    background: #2563eb;
+    transform: scale(1.1);
+}
+
+.range-value {
+    min-width: 50px;
+    font-weight: 500;
+    color: var(--theme-color);
+    font-size: 0.9rem;
+} 

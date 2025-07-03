@@ -1,0 +1,209 @@
+/* Themes Grid & Cards - 主题网格和卡片样式 */
+
+/* .themes-container should manage vertical stacking of header and grid */
+.themes-container {
+    display: flex; /* Stack header and grid vertically */
+    flex-direction: column;
+    gap: 24px; /* Gap between header and grid */
+}
+
+/* The actual grid for theme cards */
+.themes-grid {
+    display: grid; /* Default to grid for desktop */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    padding-bottom: 8px;
+}
+
+/* Mobile styles for the themes-grid */
+@media (max-width: 767px) {
+    .themes-grid {
+        display: flex; /* Switch to flex column for mobile */
+        flex-direction: column;
+        gap: 16px; /* Smaller gap for mobile */
+    }
+}
+
+/* Larger screens might need different gaps for the grid, but not the container itself */
+@media (min-width: 1200px) {
+    .themes-grid {
+        gap: 32px;
+    }
+}
+
+.theme-card {
+    position: relative;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
+}
+
+.theme-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.theme-card.active {
+    border-color: var(--theme-color);
+    box-shadow: 0 0 0 2px rgba(14, 42, 115, 0.1);
+}
+
+.theme-card-delete {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-radius: 50%;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-card-delete:hover {
+    background: #dc2626;
+    color: white;
+    transform: scale(1.1);
+}
+
+.theme-preview {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: var(--border-radius-md);
+    border: 1px solid #e2e8f0;
+}
+
+.theme-preview .preview-h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.theme-preview .preview-p {
+    font-size: 0.9rem;
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+}
+
+.theme-preview .preview-a {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.theme-preview .preview-a:hover {
+    text-decoration: underline;
+}
+
+.theme-info {
+    text-align: left;
+    padding: 0 8px;
+}
+
+.theme-info h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 16px 0 4px 0;
+    color: var(--text-color);
+}
+
+.theme-info .theme-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary-color);
+    margin-bottom: 16px;
+}
+
+.theme-name {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--theme-color, #0E2A73);
+    cursor: pointer;
+    background: none;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    transition: color 0.2s;
+}
+
+.theme-name:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.theme-preview h1,
+.theme-preview h2,
+.theme-preview h3 {
+    margin: 0.5em 0 0.3em 0;
+    font-weight: bold;
+}
+
+.theme-preview p {
+    margin: 0.3em 0 0.3em 0;
+}
+
+.theme-preview blockquote {
+    margin: 0.5em 0;
+    border-radius: 4px;
+}
+
+.theme-preview pre {
+    margin: 0.5em 0;
+    font-size: 0.95em;
+    border-radius: 6px;
+}
+
+.theme-preview ul,
+.theme-preview ol {
+    margin: 0.3em 0 0.3em 1.2em;
+    padding-left: 1.2em;
+}
+
+.theme-preview hr {
+    margin: 0.7em 0;
+}
+
+.theme-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.theme-actions .btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.theme-actions .btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 可选：美化滚动条 */
+.themes-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.themes-container::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 4px;
+} 
