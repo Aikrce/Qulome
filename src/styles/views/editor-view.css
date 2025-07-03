@@ -36,10 +36,26 @@
     background-color: var(--bg-color-secondary);
 }
 
+.current-theme-display {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: var(--p-color);
+    background-color: var(--blockquote-bg);
+    border-radius: 8px;
+    white-space: nowrap;
+    margin-left: auto; /* Push to the right */
+    border: 1px solid var(--hr-color);
+}
+
 @media (max-width: 768px) {
     .editor-actions {
-        flex-direction: column;
+        flex-direction: row;
         gap: 8px;
+    }
+    .current-theme-display {
+        display: none; /* Hide on small screens to save space */
     }
 }
 

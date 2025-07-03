@@ -216,12 +216,16 @@ class ThemeService {
     applyTheme(themeId) {
         try {
             const theme = this.themes.find(t => t.id === themeId);
-            if (theme) {
+            if (theme && theme.styles) {
+                // Apply all style variables to the root element
+                for (const [key, value] of Object.entries(theme.styles)) {
+                    document.documentElement.style.setProperty(key, value);
+                }
                 this.setActiveTheme(theme.id);
-                Logger.debug('Theme applied by id', themeId);
+                Logger.debug('Theme applied successfully', theme.name);
             } else {
-                Logger.error('Theme not found by id', themeId);
-                throw new Error(`主题 "${themeId}" 未找到`);
+                Logger.error('Theme not found or has no styles', themeId);
+                throw new Error(`主题 "${themeId}" 未找到或无效`);
             }
         } catch (error) {
             Logger.error('Failed to apply theme', error);

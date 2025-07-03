@@ -136,20 +136,20 @@ window.ThemesView = {
         try {
             const theme = window.themeService.getTheme(themeId);
             if (!theme) {
-                window.ThemesView.showError('主题不存在');
+                window.NotificationUtils.showError('主题不存在');
                 return;
             }
 
             window.themeService.applyTheme(theme.id);
-            window.themeService.setCurrentTheme(theme.id);
+            window.themeService.setActiveTheme(theme.id);
             
             window.location.hash = '#editor';
             
-            window.Notification.show(`主题 "${theme.name}" 已应用`, 'success');
+            window.NotificationUtils.showSuccess(`主题 "${theme.name}" 已应用`);
             
         } catch (error) {
             window.Logger.error('应用主题失败', error);
-            window.ThemesView.showError('应用主题失败');
+            window.NotificationUtils.showError('应用主题失败');
         }
     },
 
@@ -167,7 +167,7 @@ window.ThemesView = {
         try {
             const originalTheme = window.themeService.getTheme(themeId);
             if (!originalTheme) {
-                window.ThemesView.showError('要复制的主题不存在');
+                window.NotificationUtils.showError('要复制的主题不存在');
                         return;
                     }
 
@@ -183,10 +183,10 @@ window.ThemesView = {
 
             window.themeService.updateTheme(newTheme);
             window.ThemesView.render();
-            window.ThemesView.showSuccess(`主题 "${copyName}" 已创建`);
+            window.NotificationUtils.showSuccess(`主题 "${copyName}" 已创建`);
         } catch (error) {
             window.Logger.error('复制主题失败', error);
-            window.ThemesView.showError('复制主题失败');
+            window.NotificationUtils.showError('复制主题失败');
         }
     },
 
@@ -197,12 +197,12 @@ window.ThemesView = {
         try {
             const theme = window.themeService.getTheme(themeId);
             if (!theme) {
-                window.ThemesView.showError('要删除的主题不存在');
+                window.NotificationUtils.showError('要删除的主题不存在');
                 return;
             }
 
             if (theme.isDefault) {
-                window.ThemesView.showError('默认主题不能删除');
+                window.NotificationUtils.showError('默认主题不能删除');
                 return;
             }
 
@@ -212,12 +212,12 @@ window.ThemesView = {
                 () => {
                     window.themeService.deleteTheme(themeId);
                     window.ThemesView.render();
-                    window.ThemesView.showSuccess(`主题 "${theme.name}" 已删除`);
+                    window.NotificationUtils.showSuccess(`主题 "${theme.name}" 已删除`);
                 }
             );
         } catch (error) {
             window.Logger.error('删除主题失败', error);
-            window.ThemesView.showError('删除主题失败');
+            window.NotificationUtils.showError('删除主题失败');
         }
     },
 
@@ -229,14 +229,14 @@ window.ThemesView = {
         if (!name || !name.trim()) return;
 
         if (name.trim().length > 50) {
-            window.ThemesView.showError('主题名称不能超过50个字符');
+            window.NotificationUtils.showError('主题名称不能超过50个字符');
             return;
         }
 
         try {
             const existingThemes = window.themeService.getThemes();
             if (existingThemes.some(theme => theme.name === name.trim())) {
-                window.ThemesView.showError('主题名称已存在');
+                window.NotificationUtils.showError('主题名称已存在');
                 return;
             }
 
@@ -251,10 +251,11 @@ window.ThemesView = {
 
             window.themeService.updateTheme(newTheme);
             window.ThemesView.render();
-            window.ThemesView.showSuccess(`主题 "${newTheme.name}" 已创建`);
+            window.NotificationUtils.showSuccess(`主题 "${newTheme.name}" 已创建并设为当前编辑目标`);
+            window.ThemesView.showThemeEditor(newTheme.id);
         } catch (error) {
-            window.Logger.error('创建主题失败', error);
-            window.ThemesView.showError('创建主题失败');
+            window.Logger.error('创建新主题失败', error);
+            window.NotificationUtils.showError(error.message || '创建失败');
         }
     },
 

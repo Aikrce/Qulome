@@ -52,6 +52,17 @@ const ErrorHandler = {
 window.ErrorHandler = ErrorHandler;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ==================== 服务初始化 ====================
+    // 实例化所有服务并挂载到window对象
+    window.themeService = new ThemeService();
+    // ... 其他服务可以按需在这里初始化 ...
+
+    // 应用当前主题
+    const activeTheme = window.themeService.getActiveTheme();
+    if (activeTheme) {
+        window.themeService.applyTheme(activeTheme.id);
+    }
+
     // ==================== DOM元素缓存 ====================
     // 缓存常用的DOM元素引用，避免重复查询，提升性能
     const appRoot = document.getElementById('main-content');        // 主内容区域
@@ -109,28 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // ==================== 主题应用系统 ====================
-    /**
-     * 将当前激活主题的样式应用到页面根元素
-     * 通过CSS自定义属性(CSS Variables)的方式，使主题变量在全局CSS中可用
-     * 这是主题系统的核心函数，确保样式的统一性
+    // ==================== 主题应用系统 (已废弃) ====================
+    /* 
+     * 此功能已移至 ThemeService 内部，通过 document.documentElement.style.setProperty 实现。
+     * 在 app.js 中，我们只需要在启动时调用一次 applyTheme 即可。
      */
-    /* 删除此函数，使用 themeService.applyTheme() 替代
-    const applyCurrentActiveTheme = () => {
-        try {
-            const activeTheme = window.themeService.getActiveTheme();
-            if (activeTheme && activeTheme.styles) {
-                // 遍历主题样式对象，将每个CSS变量设置到根元素
-                for (const [key, value] of Object.entries(activeTheme.styles)) {
-                    document.documentElement.style.setProperty(key, value);
-                }
-                Logger.debug('Theme applied successfully', activeTheme.name);
-            }
-        } catch (error) {
-            Logger.error('Failed to apply active theme', error);
-        }
-    };
-    */
 
     // ==================== 导航图标系统 ====================
     /**
