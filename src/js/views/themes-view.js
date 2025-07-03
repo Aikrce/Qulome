@@ -59,10 +59,10 @@ window.ThemesView = {
                     <h4>${window.ThemeUtils.escapeHtml(theme.name)}</h4>
                     <p class="theme-description">${window.ThemeUtils.escapeHtml(theme.description || '自定义主题')}</p>
                 <div class="theme-actions">
-                        <button class="btn ${isActive ? 'btn-secondary' : 'btn-primary'} btn-theme-action ${isActive ? 'btn-active' : 'btn-activate'}" 
-                                data-action="${isActive ? 'active' : 'activate'}" 
-                                data-theme-id="${theme.id}" ${isActive ? 'disabled' : ''}>
-                            ${isActive ? '已激活' : '激活'}
+                        <button class="btn btn-primary btn-theme-action btn-apply" 
+                                data-action="apply" 
+                                data-theme-id="${theme.id}">
+                            应用
                         </button>
                         <button class="btn btn-secondary btn-theme-action btn-edit" data-action="edit" data-theme-id="${theme.id}">编辑</button>
                         <button class="btn btn-secondary btn-theme-action btn-copy" data-action="copy" data-theme-id="${theme.id}">复制</button>
@@ -110,8 +110,8 @@ window.ThemesView = {
 
         try {
             switch (action) {
-                case 'activate':
-                    window.ThemesView.activateTheme(themeId);
+                case 'apply':
+                    window.ThemesView.applyThemeAndNavigate(themeId);
                     break;
                 case 'edit':
                     window.ThemesView.showThemeEditor(themeId);
@@ -130,9 +130,9 @@ window.ThemesView = {
     },
 
     /**
-     * 激活主题
+     * 应用主题并跳转到编辑器
      */
-    activateTheme: (themeId) => {
+    applyThemeAndNavigate: (themeId) => {
         try {
             const theme = window.themeService.getTheme(themeId);
             if (!theme) {
@@ -141,13 +141,16 @@ window.ThemesView = {
             }
 
             window.themeService.applyTheme(theme.id);
-                    window.ThemesView.render();
-            window.ThemesView.showSuccess(`主题 "${theme.name}" 已激活`);
-            window.ThemesView.notifyThemeChange();
-                    } catch (error) {
-            window.Logger.error('激活主题失败', error);
-            window.ThemesView.showError('激活主题失败');
-                    }
+            window.themeService.setCurrentTheme(theme.id);
+            
+            window.location.hash = '#editor';
+            
+            window.Notification.show(`主题 "${theme.name}" 已应用`, 'success');
+            
+        } catch (error) {
+            window.Logger.error('应用主题失败', error);
+            window.ThemesView.showError('应用主题失败');
+        }
     },
 
     /**
@@ -256,18 +259,6 @@ window.ThemesView = {
     },
 
     /**
-     * 通知主题更改
-     */
-    notifyThemeChange: () => {
-        const event = new CustomEvent('themeChanged', {
-            detail: { activeTheme: window.themeService.getActiveTheme() }
-        });
-        document.dispatchEvent(event);
-    },
-
-
-
-    /**
      * 显示成功消息
      */
     showSuccess: (message) => {
@@ -279,7 +270,5 @@ window.ThemesView = {
      */
     showError: (message) => {
         window.NotificationUtils.showError(message);
-    },
-
-
+    }
 }; 
