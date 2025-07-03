@@ -176,11 +176,23 @@
     font-weight: 500;
     cursor: pointer;
     transition: background 0.18s, color 0.18s, border 0.18s;
+    margin-bottom: 6px;
 }
 .icon-lib-btn:hover {
     background: var(--theme-color);
     color: #fff;
     border-color: var(--theme-color);
+}
+@media (max-width: 600px) {
+    .icon-libs-bar {
+        gap: 8px 0;
+        justify-content: stretch;
+    }
+    .icon-lib-btn {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
 }
 
 /* 可选：美化滚动条 */

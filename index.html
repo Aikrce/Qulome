@@ -4,15 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qulome - 文字可以很美</title>
-    <link rel="stylesheet" href="src/styles/main.css">
-    <!-- Enhanced Views with improved event binding and error handling -->
-    <link rel="stylesheet" href="src/styles/editor-view.css">
-    <link rel="stylesheet" href="src/styles/themes-view.css">
-    <link rel="stylesheet" href="src/styles/icons-view.css">
-    <link rel="stylesheet" href="src/styles/drafts-view.css">
-    <link rel="stylesheet" href="src/styles/publish-view.css">
     
-    <!-- External Dependencies - 只保留一份，避免重复加载 -->
+    <!-- Base Styles -->
+    <link rel="stylesheet" href="src/styles/main.css">
+    
+    <!-- View-specific styles -->
+    <link rel="stylesheet" href="src/styles/views/welcome-view.css">
+    <link rel="stylesheet" href="src/styles/views/editor-view.css">
+    <link rel="stylesheet" href="src/styles/views/themes-view.css">
+    <link rel="stylesheet" href="src/styles/views/icons-view.css">
+    <link rel="stylesheet" href="src/styles/views/drafts-view.css">
+    <link rel="stylesheet" href="src/styles/views/publish-view.css">
+    <link rel="stylesheet" href="src/styles/views/theme-editor.css">
+    
+    <!-- Component styles -->
+    <link rel="stylesheet" href="src/styles/components/buttons.css">
+    <link rel="stylesheet" href="src/styles/components/color-extraction.css">
+    <link rel="stylesheet" href="src/styles/components/theme-editor-forms.css">
+    <link rel="stylesheet" href="src/styles/components/theme-preview.css">
+    <link rel="stylesheet" href="src/styles/components/themes-grid.css">
+
+    <!-- External Dependencies -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
@@ -119,31 +131,13 @@
                     </form>
                     <div class="icon-resources">
                         <p>寻找灵感？试试这些免费图标库：</p>
-                        <ul>
-                            <li><a href="https://tabler-icons.io/" target="_blank">Tabler Icons</a></li>
-                            <li><a href="https://lucide.dev/" target="_blank">Lucide</a></li>
-                            <li><a href="https://heroicons.com/" target="_blank">Heroicons</a></li>
-                        </ul>
+                        <div class="icon-libs-bar"></div>
                     </div>
                 </div>
             </div>
             <div id="themes-view" class="themes-view" style="display:none;">
-                <div class="themes-main">
-                    <div class="main-view-header">
-                        <h1>我的主题库</h1>
-                        <p>在这里创建、编辑和管理您的文章主题。</p>
-                    </div>
-                    <div id="themes-grid" class="themes-grid">
-                        <!-- Theme cards will be rendered here -->
-                    </div>
-                </div>
-                <div class="themes-sidebar">
-                    <h2>创建新主题</h2>
-                    <p>从这里开始，为您的新主题命名。</p>
-                    <form id="add-theme-form">
-                        <input type="text" id="new-theme-name" name="theme-name" placeholder="我的新主题">
-                        <button type="submit" class="btn btn-primary btn-full">创建新主题</button>
-                    </form>
+                <div id="themes-container" class="themes-container">
+                    <!-- Theme content will be rendered here by ThemesView.js -->
                 </div>
             </div>
             
@@ -243,19 +237,32 @@
         </main>
     </div>
 
-    <!-- App Services -->
+    <!-- App Core -->
     <script src="src/js/config.js"></script>
     <script src="src/js/utils/performance-monitor.js"></script>
-    <script src="src/js/theme-service.js"></script>
-    <script src="src/js/draft-service.js"></script>
-    <script src="src/js/publish-service.js"></script>
-    <script src="src/js/icon-service.js"></script>
+    <script src="src/js/utils/logger.js"></script>
+    <script src="src/js/utils/error-handler.js"></script>
+
+    <!-- App Services -->
+    <script src="src/js/services/theme-service.js"></script>
+    <script src="src/js/services/draft-service.js"></script>
+    <script src="src/js/services/publish-service.js"></script>
+    <script src="src/js/services/icon-service.js"></script>
     
-    <!-- View-specific Logic -->
+    <!-- Theme Utilities -->
+    <script src="src/js/utils/notification.js"></script>
+    <script src="src/js/utils/theme-color-utils.js"></script>
+    <script src="src/js/utils/theme-utils.js"></script>
+
+    <!-- App Views -->
     <script src="src/js/views/editor-view.js"></script>
-    <script src="src/js/views/icons-view.js"></script>
-    <script src="src/js/views/themes-view.js"></script>
     <script src="src/js/views/theme-editor-view.js"></script>
+    <script src="src/js/views/theme-preview-view.js"></script>
+    <script src="src/js/views/theme-editor-modal.js"></script>
+    <script src="src/js/views/theme-color-extractor.js"></script>
+    <script src="src/js/views/theme-form-handler.js"></script>
+    <script src="src/js/views/themes-view.js"></script>
+    <script src="src/js/views/icons-view.js"></script>
     <script src="src/js/views/drafts-view.js"></script>
     <script src="src/js/views/publish-view.js"></script>
 

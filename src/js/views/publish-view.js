@@ -100,8 +100,8 @@ window.PublishView = {
             <div class="list-item" data-article-id="${article.id}">
               <div class="item-main">
                 <div class="item-info">
-                  <h3 class="item-title" title="${window.PublishView.escapeHtml(article.title)}">
-                    ${window.PublishView.escapeHtml(article.title)}
+                  <h3 class="item-title" title="${window.ThemeUtils.escapeHtml(article.title)}">
+                    ${window.ThemeUtils.escapeHtml(article.title)}
                   </h3>
                   <div class="item-preview">
                     ${window.PublishView.getContentPreview(article.content)}
@@ -203,7 +203,7 @@ window.PublishView = {
             modal.innerHTML = `
                 <div class="modal-content preview-modal">
                     <div class="modal-header">
-                        <h3>${window.PublishView.escapeHtml(article.title)}</h3>
+                        <h3>${window.ThemeUtils.escapeHtml(article.title)}</h3>
                         <button class="modal-close-btn">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -418,14 +418,7 @@ window.PublishView = {
         }
     },
 
-    /**
-     * HTML转义，防止XSS
-     */
-    escapeHtml: (text) => {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    },
+
 
     /**
      * 显示成功消息

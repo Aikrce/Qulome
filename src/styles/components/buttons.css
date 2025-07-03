@@ -1,0 +1,110 @@
+/* === Button Styles === */
+
+/* Base Button Style */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-lg); /* Use the large radius for a consistent, modern look */
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn:hover {
+    /* General hover effect can be defined here if needed, or in specific button types */
+}
+
+/* Primary Button */
+.btn-primary {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-color);
+    border-color: var(--button-primary-bg);
+}
+
+.btn-primary:hover {
+    background-color: #2C4BA3; /* Lighter blue for hover */
+    border-color: #2C4BA3;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-color);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db; /* A slightly darker gray */
+}
+
+/* Danger Button */
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: #c53030;
+    border-color: #c53030;
+}
+
+/* Accent Button */
+.btn-accent {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.btn-accent:hover {
+    background-color: #2C4BA3; /* Lighter blue for hover */
+    border-color: #2C4BA3;
+}
+
+/* Full Width Button */
+.btn-full {
+    width: 100%;
+    text-align: center;
+}
+
+/* Disabled State */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--button-secondary-bg);
+    color: var(--text-secondary-color);
+}
+
+.btn:disabled:hover {
+    /* no change on hover when disabled */
+    background-color: var(--button-secondary-bg);
+    color: var(--text-secondary-color);
+}
+
+/* Icon inside button */
+.btn svg {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .btn:hover {
+        transition: none;
+    }
+} 

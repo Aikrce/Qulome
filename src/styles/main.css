@@ -253,21 +253,15 @@ a:focus {
         padding: 16px;
     }
     
-    .main-view-header h1 {
-        font-size: 1.25rem;
-    }
-    
     .editor-actions {
         flex-direction: column;
         gap: 8px;
     }
     
-    .themes-view,
     .icons-view {
         flex-direction: column;
     }
     
-    .themes-sidebar,
     .icons-sidebar {
         width: 100%;
         margin-top: 24px;
@@ -276,22 +270,14 @@ a:focus {
         padding-top: 24px;
     }
     
-    .themes-grid,
     .icons-grid {
         grid-template-columns: 1fr;
     }
     
     /* 统一的移动端卡片样式 */
-    .theme-card,
     .icon-card {
         margin: 8px 0;
         padding: 16px;
-    }
-    
-    /* 统一的移动端按钮样式 */
-    .btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
     }
     
     /* 统一的移动端表单样式 */
@@ -303,13 +289,6 @@ a:focus {
     .form-group textarea {
         padding: 12px 16px;
         font-size: 16px; /* 防止iOS缩放 */
-    }
-    
-    /* 统一的移动端列表样式 */
-    .list-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
     }
     
     .item-actions {
@@ -336,54 +315,10 @@ a:focus {
         top: 10px;
     }
     
-    /* 统一的移动端模态框样式 */
-    .modal-content {
-        margin: 20px;
-        max-width: calc(100vw - 40px);
-        max-height: calc(100vh - 40px);
-    }
-    
-    /* 统一的移动端主题编辑器样式 */
-    .theme-editor-view {
-        padding: 16px;
-    }
-    
-    .theme-editor-body {
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .theme-editor-sidebar {
-        width: 100%;
-    }
-    
-    .editor-tabs {
-        flex-direction: row;
-        gap: 8px;
-    }
-    
-    .tab-btn {
-        flex: 1;
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
-    
-    .theme-editor-preview {
-        width: 100%;
-    }
-    
-    .theme-editor-footer {
-        flex-direction: column;
-        gap: 12px;
-    }
-    
-    .theme-editor-footer .btn {
-        width: 100%;
-    }
+    /* 移动端主题编辑器样式已移至theme-editor.css */
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
-    .themes-grid,
     .icons-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -456,6 +391,12 @@ a:focus {
     color: var(--text-color);
 }
 
+@media (max-width: 768px) {
+    .main-view-header h1 {
+        font-size: 1.25rem;
+    }
+}
+
 .main-view-header p {
     font-size: 1rem;
     color: var(--text-secondary-color);
@@ -466,210 +407,16 @@ a:focus {
 /* 5. View-Specific Styles
 ------------------------- */
 
-/* Welcome View */
-.welcome-view {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    text-align: center;
-    padding-left: 5vw;
-    padding-right: 5vw;
-}
-
-.welcome-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 640px;
-    width: 100%;
-    gap: 2.5rem;
-    margin: 0 auto;
-    transition: margin-left 0.3s;
-}
-
-@media (min-width: 1200px) {
-    .welcome-center {
-        margin-left: 10vw;
-    }
-}
-
-.welcome-center h1,
-.welcome-center p,
-.welcome-center .welcome-buttons {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.welcome-center .welcome-buttons {
-    display: flex;
-    gap: 2rem;
-    justify-content: center;
-}
-
-.welcome-view h1 {
-    font-size: clamp(2.5rem, 8vw, 4.5rem); /* 响应式字体大小 */
-    color: var(--theme-color);
-    margin: 0 0 1rem 0;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    text-shadow: 0 2px 4px rgba(14, 42, 115, 0.15);
-}
-
-.welcome-view p {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 0 3rem 0;
-    color: var(--text-secondary-color);
-    line-height: 1.6;
-    font-weight: 400;
-    text-align: center;
-    display: block;
-}
-
-.welcome-buttons {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-}
-
-.welcome-buttons .btn {
-    padding: 12px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    min-width: 140px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(14, 42, 115, 0.15);
-    background-color: var(--theme-color);
-    color: white;
-    border-color: var(--theme-color);
-}
-
-.welcome-buttons .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(14, 42, 115, 0.25);
-    background-color: #2C4BA3; /* 稍微浅一点的蓝色 */
-    border-color: #2C4BA3;
-}
-
-/* 确保在各种设备上都能正确居中 */
-@media (max-height: 600px) {
-    .welcome-view {
-        min-height: 100vh;
-        padding: 1rem;
-    }
-    
-    .welcome-view h1 {
-        font-size: clamp(2rem, 6vw, 3rem);
-        margin-bottom: 0.5rem;
-    }
-    
-    .welcome-view p {
-        margin-bottom: 2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .welcome-buttons {
-        flex-direction: column;
-        width: 100%;
-        max-width: 280px;
-    }
-    
-    .welcome-buttons .btn {
-        width: 100%;
-    }
-}
-
 /* 6. Reusable Components
 ------------------------- */
-
-/* Buttons */
-.btn {
-    display: inline-block;
-    padding: 8px 16px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    border-radius: var(--border-radius-lg); /* Use the large radius for a consistent, modern look */
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-}
-
-.btn-primary {
-    background-color: var(--button-primary-bg);
-    color: var(--button-primary-color);
-    border-color: var(--button-primary-bg);
-}
-
-.btn-primary:hover {
-    background-color: #2C4BA3; /* Lighter blue for hover */
-    border-color: #2C4BA3;
-}
-
-.btn-secondary {
-    background-color: var(--button-secondary-bg);
-    color: var(--button-secondary-color);
-    border-color: var(--border-color);
-}
-
-.btn-secondary:hover {
-    background-color: #d1d5db; /* A slightly darker gray */
-}
-
-.btn-danger {
-    background-color: var(--danger-color);
-    color: white;
-    border-color: var(--danger-color);
-}
-
-.btn-danger:hover {
-    background-color: #c53030;
-    border-color: #c53030;
-}
-
-.btn-accent {
-    background-color: var(--accent-color);
-    color: white;
-    border-color: var(--accent-color);
-}
-
-.btn-accent:hover {
-    background-color: #2C4BA3; /* Lighter blue for hover */
-    border-color: #2C4BA3;
-}
-
-.btn-full {
-    width: 100%;
-    text-align: center;
-}
+/* Buttons
+  ------------------------- */
+/* All button styles have been moved to src/styles/components/buttons.css */
 
 /* Cards (Theme, Icon) */
-/* 删除简化的 .theme-card 定义，使用 themes-view.css 中的完整版本 */
-/* .theme-card, .icon-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-md);
-    padding: 20px;
-    background-color: #ffffff;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s;
-}
+/* 卡片样式已移至对应的模块文件：themes-grid.css, icons-view.css */
 
-.theme-card:hover, .icon-card:hover {
-    box-shadow: var(--shadow-md);
-} */
-
-.theme-card h3 {
-    margin: 10px 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
+/* theme-card样式已移至themes-grid.css */
 
 .icon-preview {
     height: 80px;
@@ -806,20 +553,25 @@ a:focus {
 }
 
 .modal-content {
-    background: #fff;
+    background: var(--primary-color);
+    padding: 24px;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
-    padding: 32px 24px 24px 24px;
-    max-width: 480px;
-    width: 96vw;
-    max-height: 80vh;
-    overflow-y: auto;
     position: relative;
-    animation: modalIn 0.2s cubic-bezier(.4,1.6,.6,1);
+    max-width: 500px;
+    width: 100%;
+    animation: modalIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
+
 @keyframes modalIn {
-    from { transform: translateY(40px) scale(0.98); opacity: 0; }
-    to   { transform: none; opacity: 1; }
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .modal-title {
@@ -967,10 +719,7 @@ a:focus {
     flex-shrink: 0;
 }
 
-.theme-card {
-    background-color: #fff;
-    border-radius: 8px;
-}
+/* theme-card样式已移至themes-grid.css */
 
 /* 10. Notification System & Animations
 ------------------------- */
@@ -1130,28 +879,8 @@ a:focus {
     box-shadow: none;
 }
 
-/* 15. Theme Card Enhancements
+/* 15. Theme Card Enhancements - 已移至themes-grid.css
 ------------------------- */
-.theme-card.active {
-    border-color: var(--theme-color);
-    box-shadow: 0 0 0 2px rgba(14, 42, 115, 0.1);
-}
-
-.theme-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 12px 0 8px 0;
-}
-
-.theme-status {
-    font-size: 0.75rem;
-    background: var(--theme-color);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 500;
-}
 
 .preview-a {
     font-size: 0.9rem;
@@ -1223,9 +952,27 @@ a:focus {
 }
 
 /* .icon-card:focus-within 由 icons-view.css 处理 */
-.theme-card:focus-within {
-    outline: 2px solid var(--theme-color);
-    outline-offset: 2px;
+/* .theme-card:focus-within 由 themes-grid.css 处理 */
+
+@media (prefers-reduced-motion: reduce) {
+    .notification {
+        transition: none;
+    }
+
+    .list-item:hover {
+        transform: none;
+    }
+}
+
+.list-item:focus-within {
+    box-shadow: 0 0 0 2px var(--theme-color-light);
+}
+
+/* 统一的移动端列表样式 */
+.list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
 }
 
  

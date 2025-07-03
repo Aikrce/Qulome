@@ -140,6 +140,10 @@ class ThemeService {
         }
     }
 
+    getDefaultStyles() {
+        return this.createDefaultStyles();
+    }
+
     createDefaultStyles() {
         return {
             // 1. 标题系统
@@ -257,6 +261,11 @@ class ThemeService {
         this.themes = this.themes.filter(t => t.id !== theme.id);
         this.themes.push(theme);
         this.saveThemes();
+    }
+
+    // 兼容性别名
+    saveTheme(theme) {
+        return this.updateTheme(theme);
     }
 
     generateId() {

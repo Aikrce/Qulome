@@ -101,8 +101,8 @@ window.DraftsView = {
             <div class="list-item" data-draft-id="${draft.id}">
               <div class="item-main">
                 <div class="item-info">
-                  <h3 class="item-title" title="${window.DraftsView.escapeHtml(draft.title)}">
-                    ${window.DraftsView.escapeHtml(draft.title)}
+                  <h3 class="item-title" title="${window.ThemeUtils.escapeHtml(draft.title)}">
+                    ${window.ThemeUtils.escapeHtml(draft.title)}
                   </h3>
                   <div class="item-preview">
                     ${window.DraftsView.getContentPreview(draft.content)}
@@ -383,14 +383,7 @@ window.DraftsView = {
         }
     },
 
-    /**
-     * HTML转义，防止XSS
-     */
-    escapeHtml: (text) => {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    },
+
 
     /**
      * 显示成功消息

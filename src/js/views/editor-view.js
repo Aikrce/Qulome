@@ -26,23 +26,23 @@ function openIconSelectionModal(quill) {
     document.body.appendChild(modal);
 
     try {
-        const icons = window.iconService.getIcons();
-        const grid = modal.querySelector('#modal-icons-grid');
-        grid.innerHTML = icons.map(icon => `
-            <div class="icon-card" data-icon-id="${icon.id}" data-icon-name="${icon.name}">
-                <div class="icon-preview">${icon.svg}</div>
-                <p class="icon-name">${icon.name}</p>
-            </div>
-        `).join('');
+    const icons = window.iconService.getIcons();
+    const grid = modal.querySelector('#modal-icons-grid');
+    grid.innerHTML = icons.map(icon => `
+        <div class="icon-card" data-icon-id="${icon.id}" data-icon-name="${icon.name}">
+            <div class="icon-preview">${icon.svg}</div>
+            <p class="icon-name">${icon.name}</p>
+        </div>
+    `).join('');
 
         // Use event delegation for better performance
         grid.onclick = (event) => {
             const iconCard = event.target.closest('.icon-card');
             if (iconCard) {
                 const iconName = iconCard.dataset.iconName;
-                const range = quill.getSelection(true);
-                quill.insertText(range.index, `[icon:${iconName}]`);
-                document.body.removeChild(modal);
+            const range = quill.getSelection(true);
+            quill.insertText(range.index, `[icon:${iconName}]`);
+            document.body.removeChild(modal);
             }
         };
     } catch (error) {
@@ -163,17 +163,17 @@ window.EditorView = {
 
         // Only initialize if not already done
         if (!window.EditorView.quillInstance) {
-            const toolbarOptions = [
-                ['bold', 'italic', 'underline'],
-                [{ 'header': [1, 2, 3, false] }],
-                [{ 'align': [] }],
-                [{ 'color': [] }],
-                ['blockquote', 'code-block', {'list': 'ordered'}, {'list': 'bullet'}],
-                [{ 'indent': '-1'}, { 'indent': '+1' }],
-                ['link', 'image', 'imageGroup']
-            ];
+                const toolbarOptions = [
+                    ['bold', 'italic', 'underline'],
+                    [{ 'header': [1, 2, 3, false] }],
+                    [{ 'align': [] }],
+                    [{ 'color': [] }],
+                    ['blockquote', 'code-block', {'list': 'ordered'}, {'list': 'bullet'}],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    ['link', 'image', 'imageGroup']
+                ];
 
-            window.EditorView.quillInstance = new Quill('#editor-container', {
+                window.EditorView.quillInstance = new Quill('#editor-container', {
                 modules: { toolbar: toolbarOptions },
                 theme: 'snow',
                 placeholder: '开始写作...'
@@ -297,7 +297,7 @@ window.EditorView = {
 
         if (!importBtn || !changeThemeBtn || !copyBtn) {
             window.Logger.error('One or more action buttons not found');
-            return;
+             return;
         }
 
         // Import Markdown button
