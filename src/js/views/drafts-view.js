@@ -101,8 +101,8 @@ window.DraftsView = {
             <div class="list-item" data-draft-id="${draft.id}">
               <div class="item-main">
                 <div class="item-info">
-                  <h3 class="item-title" title="${window.ThemeUtils.escapeHtml(draft.title)}">
-                    ${window.ThemeUtils.escapeHtml(draft.title)}
+                  <h3 class="item-title" title="${window.ThemeUtils && window.ThemeUtils.escapeHtml ? window.ThemeUtils.escapeHtml(draft.title) : draft.title}">
+                    ${window.ThemeUtils && window.ThemeUtils.escapeHtml ? window.ThemeUtils.escapeHtml(draft.title) : draft.title}
                   </h3>
                   <div class="item-preview">
                     ${window.DraftsView.getContentPreview(draft.content)}
@@ -382,8 +382,6 @@ window.DraftsView = {
             return '未知时间';
         }
     },
-
-
 
     /**
      * 显示成功消息

@@ -278,6 +278,11 @@ window.EditorView = {
             window.themeService.applyTheme(newTheme.id);
             window.NotificationUtils.showSuccess(`主题已切换为: ${newTheme.name}`);
             this.updateThemeDisplay();
+            // 强制刷新编辑器内容区样式
+            if (this.quillInstance) {
+                this.quillInstance.root.style.fontSize = getComputedStyle(document.documentElement).getPropertyValue('--p-font-size') || '16px';
+                this.quillInstance.root.style.color = getComputedStyle(document.documentElement).getPropertyValue('--p-color') || '#222';
+            }
         } catch (error) {
             window.Logger.error('Failed to change theme', error);
             window.NotificationUtils.showError('主题切换失败');

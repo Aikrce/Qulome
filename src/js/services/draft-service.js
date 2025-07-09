@@ -4,19 +4,25 @@ const CURRENT_DRAFT_ID_KEY = 'qulome_current_draft_id';
 // 清理无效草稿（无内容或无标题）
 function cleanInvalidDrafts() {
     let drafts = getDrafts();
-    const validDrafts = drafts.filter(d => d && typeof d.id === 'string' && typeof d.title === 'string' && d.title.trim() && typeof d.content === 'string' && d.content.replace(/<[^>]+>/g, '').trim());
-    if (validDrafts.length !== drafts.length) {
+    const initialDraftCount = drafts.length;
+    const validDrafts = drafts.filter(d => d && typeof d.id === 'string' && typeof d.title === 'string' && d.title.trim() && (d.content.replace(/<[^>]+>/g, '').trim() || d.content === '<p><br></p>') && typeof d.content === 'string');
+    if (validDrafts.length !== initialDraftCount) {
         saveDrafts(validDrafts);
-        if (window && window.Logger) window.Logger.info('已自动清理无效草稿');
+        if (window && window.Logger) window.Logger.info(`cleanInvalidDrafts: Removed ${initialDraftCount - validDrafts.length} invalid drafts.`);
+    } else {
+        if (window && window.Logger) window.Logger.debug('cleanInvalidDrafts: No invalid drafts found.');
     }
 }
 
 function getDrafts() {
     const drafts = localStorage.getItem(DRAFTS_STORAGE_KEY);
-    return drafts ? JSON.parse(drafts) : [];
+    const parsedDrafts = drafts ? JSON.parse(drafts) : [];
+    if (window.Logger) window.Logger.debug('getDrafts called, returning:', parsedDrafts);
+    return parsedDrafts;
 }
 
 function saveDrafts(drafts) {
+    if (window.Logger) window.Logger.debug('saveDrafts called, saving:', drafts);
     localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
 }
 
@@ -59,6 +65,7 @@ function createDraft(content) {
     };
     drafts.push(newDraft);
     saveDrafts(drafts);
+    if (window.Logger) window.Logger.debug('createDraft called, new draft:', newDraft);
     return newDraft;
 }
 
@@ -82,30 +89,37 @@ function getDraft(draftId) {
 
 function deleteDraft(draftId) {
     let drafts = getDrafts();
-    let before = drafts.length;
+    let initialDraftCount = drafts.length;
     drafts = drafts.filter(d => d.id !== draftId);
     // 兜底：如果没删掉，尝试删除所有 id 异常的草稿
-    if (drafts.length === before) {
+    if (drafts.length === initialDraftCount) {
         drafts = drafts.filter(d => d.id && typeof d.id === 'string');
+        if (window && window.Logger) window.Logger.warn('deleteDraft: Could not delete by ID, attempting to clean invalid IDs.');
     }
     saveDrafts(drafts);
+    if (window.Logger) window.Logger.debug(`deleteDraft called for ${draftId}, remaining drafts:`, drafts.length);
 }
 
 function cleanOrphanDrafts() {
     let drafts = getDrafts();
+    const initialDraftCount = drafts.length;
     // 只保留有内容的草稿
-    const validDrafts = drafts.filter(d => d && typeof d.id === 'string' && typeof d.content === 'string' && d.content.replace(/<[^>]+>/g, '').trim());
-    if (validDrafts.length !== drafts.length) {
+    const validDrafts = drafts.filter(d => d && typeof d.id === 'string' && (d.content.replace(/<[^>]+>/g, '').trim() || d.content === '<p><br></p>') && typeof d.content === 'string');
+    if (validDrafts.length !== initialDraftCount) {
         saveDrafts(validDrafts);
-        if (window && window.Logger) window.Logger.info('已自动清理无内容 orphan 草稿');
+        if (window && window.Logger) window.Logger.info(`cleanOrphanDrafts: Removed ${initialDraftCount - validDrafts.length} orphan drafts.`);
+    } else {
+        if (window && window.Logger) window.Logger.debug('cleanOrphanDrafts: No orphan drafts found.');
     }
     // 检查 currentDraftId 是否还有效
     const currentId = getCurrentDraftId();
     if (currentId && !validDrafts.some(d => d.id === currentId)) {
         if (validDrafts.length > 0) {
             setCurrentDraftId(validDrafts[0].id);
+            if (window.Logger) window.Logger.info(`cleanOrphanDrafts: Reset currentDraftId to first valid draft.`);
         } else {
             setCurrentDraftId(null);
+            if (window && window.Logger) window.Logger.info(`cleanOrphanDrafts: Cleared currentDraftId.`);
         }
     }
 }

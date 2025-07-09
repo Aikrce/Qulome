@@ -613,22 +613,38 @@ a:focus {
 
 /* 8. Typography & Content Styles
 ------------------------- */
-#editor-container .ql-editor, #theme-preview-pane {
-    line-height: 1.6;
+#editor-container .ql-editor {
+    font-size: var(--p-font-size, 1rem);
+    color: var(--p-color, var(--text-color));
+    line-height: var(--p-line-height, 1.6);
+    font-family: var(--font-sans);
+    background: transparent;
 }
 
-#editor-container .ql-editor h1, #theme-preview-pane h1,
-#editor-container .ql-editor h2, #theme-preview-pane h2,
-#editor-container .ql-editor h3, #theme-preview-pane h3 {
-    color: var(--h1-color, var(--text-color));
-    font-weight: var(--h1-font-weight, 700);
-}
-
-#editor-container .ql-editor p, #theme-preview-pane p {
+#editor-container .ql-editor p {
+    font-size: var(--p-font-size, 1rem);
     color: var(--p-color, var(--text-color));
     margin-bottom: var(--p-margin-bottom, 1em);
-    font-size: var(--p-font-size, 1rem);
     line-height: var(--p-line-height, 1.6);
+}
+
+#editor-container .ql-editor h1 {
+    font-size: var(--h1-font-size, 2em);
+    color: var(--h1-color, var(--text-color));
+    font-weight: var(--h1-font-weight, 700);
+    text-align: var(--h1-text-align, left);
+}
+#editor-container .ql-editor h2 {
+    font-size: var(--h2-font-size, 1.5em);
+    color: var(--h2-color, var(--text-color));
+    font-weight: var(--h2-font-weight, 600);
+    text-align: var(--h2-text-align, left);
+}
+#editor-container .ql-editor h3 {
+    font-size: var(--h3-font-size, 1.2em);
+    color: var(--h3-color, var(--text-color));
+    font-weight: var(--h3-font-weight, 500);
+    text-align: var(--h3-text-align, left);
 }
 
 #editor-container .ql-editor a, #theme-preview-pane a {
