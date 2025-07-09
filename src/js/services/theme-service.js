@@ -61,20 +61,7 @@ const defaultThemes = [
     }
 ];
 
-// 统一的日志管理
-const Logger = {
-    debug: (message, data = null) => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log(`[ThemeService Debug] ${message}`, data || '');
-        }
-    },
-    error: (message, error = null) => {
-        console.error(`[ThemeService Error] ${message}`, error || '');
-    },
-    info: (message, data = null) => {
-        console.info(`[ThemeService Info] ${message}`, data || '');
-    }
-};
+// window.Logger is handled globally by utils/logger.js
 
 // 深层清理无效/重复主题（无id、空id、重复id、无名）
 function cleanInvalidThemes() {
@@ -90,7 +77,7 @@ function cleanInvalidThemes() {
     }
     if (validThemes.length !== themes.length) {
         saveThemes(validThemes);
-        if (window && window.Logger) window.Logger.info('已自动清理无效/重复主题');
+        if (window && window.window.Logger) window.window.Logger.info('已自动清理无效/重复主题');
     }
 }
 
@@ -103,30 +90,30 @@ class ThemeService {
 
     init() {
         try {
-            Logger.debug('Initializing ThemeService...');
+            window.window.Logger.debug('Initializing ThemeService...');
             this.loadThemes();
             this.activeThemeId = localStorage.getItem('qulome_active_theme_id');
-            Logger.debug('Active theme ID loaded', this.activeThemeId);
+            window.window.Logger.debug('Active theme ID loaded', this.activeThemeId);
             if (this.themes.length === 0) {
-                Logger.info('No themes found, adding default theme');
+                window.Logger.info('No themes found, adding default theme');
                 this.addDefaultTheme();
             }
-            Logger.debug('ThemeService initialization complete');
+            window.Logger.debug('ThemeService initialization complete');
             cleanInvalidThemes();
         } catch (error) {
-            Logger.error('Failed to initialize ThemeService', error);
+            window.Logger.error('Failed to initialize ThemeService', error);
         }
     }
 
     loadThemes() {
         try {
-            Logger.debug('Loading themes from localStorage...');
+            window.Logger.debug('Loading themes from localStorage...');
             const storedThemes = localStorage.getItem('qulome_themes');
             const result = storedThemes ? JSON.parse(storedThemes) : [];
             this.themes = result;
-            Logger.debug('Themes loaded successfully', result);
+            window.Logger.debug('Themes loaded successfully', result);
         } catch (error) {
-            Logger.error('Failed to load themes from localStorage', error);
+            window.Logger.error('Failed to load themes from localStorage', error);
             this.themes = [];
         }
     }
@@ -134,40 +121,14 @@ class ThemeService {
     saveThemes() {
         try {
             localStorage.setItem('qulome_themes', JSON.stringify(this.themes));
-            Logger.debug('Themes saved successfully');
+            window.Logger.debug('Themes saved successfully');
         } catch (error) {
-            Logger.error('Failed to save themes to localStorage', error);
+            window.Logger.error('Failed to save themes to localStorage', error);
         }
     }
 
     getDefaultStyles() {
-        return this.createDefaultStyles();
-    }
-
-    createDefaultStyles() {
-        return {
-            // 1. 标题系统
-            '--h1-font-size': '24px', '--h1-color': '#1F2937', '--h1-font-weight': 'bold', '--h1-text-align': 'left',
-            '--h2-font-size': '20px', '--h2-color': '#1F2937', '--h2-font-weight': 'bold', '--h2-text-align': 'left',
-            '--h3-font-size': '18px', '--h3-color': '#1F2937', '--h3-font-weight': 'bold', '--h3-text-align': 'left',
-            
-            // 2. 正文系统
-            '--p-font-family': 'sans-serif', '--p-font-size': '16px', '--p-color': '#374151',
-            '--p-line-height': '1.7', '--p-margin-bottom': '20px', '--p-text-align': 'justify',
-            
-            // 3. 特殊文本
-            '--a-color': '#4338CA', '--a-hover-color': '#312E81',
-            '--strong-color': '#4338CA', '--em-color': '#4338CA',
-            '--code-bg': '#E5E7EB', '--code-color': '#BE123C',
-            
-            // 4. 块级元素
-            '--blockquote-bg': '#F3F4F6', '--blockquote-border-color': '#D1D5DB', '--blockquote-padding': '15px 20px', '--blockquote-color': '#4B5563',
-            '--code-block-bg': '#111827', '--code-block-color': '#E5E7EB', '--code-block-padding': '15px', '--code-block-border-radius': '6px',
-            '--ul-list-style': 'disc', '--ol-list-style': 'decimal', '--list-pl': '30px',
-            
-            // 5. 视觉分隔
-            '--hr-color': '#D1D5DB', '--hr-height': '1px', '--hr-margin': '30px 0',
-        };
+        return defaultThemes[0].styles;
     }
 
     addDefaultTheme() {
@@ -176,15 +137,15 @@ class ThemeService {
             this.themes.push(defaultTheme);
             this.saveThemes();
             this.setActiveTheme(defaultTheme.id);
-            Logger.debug('Default theme added');
+            window.window.Logger.debug('Default theme added');
         } catch (error) {
-            Logger.error('Failed to add default theme', error);
+            window.window.Logger.error('Failed to add default theme', error);
         }
     }
 
     addTheme(name) {
         if (!name || typeof name !== 'string' || !name.trim()) {
-            if (window && window.Logger) window.Logger.warn('禁止创建无名主题', name);
+            if (window && window.window.Logger) window.window.Logger.warn('禁止创建无名主题', name);
             throw new Error('主题名称不能为空');
         }
         let id;
@@ -207,9 +168,9 @@ class ThemeService {
             this.activeThemeId = themeId;
             localStorage.setItem('qulome_active_theme_id', themeId);
             this.saveThemes();
-            Logger.debug('Active theme set', themeId);
+            window.Logger.debug('Active theme set', themeId);
         } catch (error) {
-            Logger.error('Failed to set active theme', error);
+            window.Logger.error('Failed to set active theme', error);
         }
     }
 
@@ -222,13 +183,13 @@ class ThemeService {
                     document.documentElement.style.setProperty(key, value);
                 }
                 this.setActiveTheme(theme.id);
-                Logger.debug('Theme applied successfully', theme.name);
+                window.Logger.debug('Theme applied successfully', theme.name);
             } else {
-                Logger.error('Theme not found or has no styles', themeId);
+                window.Logger.error('Theme not found or has no styles', themeId);
                 throw new Error(`主题 "${themeId}" 未找到或无效`);
             }
         } catch (error) {
-            Logger.error('Failed to apply theme', error);
+            window.Logger.error('Failed to apply theme', error);
             throw error;
         }
     }
@@ -248,7 +209,7 @@ class ThemeService {
         if (validThemes.length !== this.themes.length) {
             this.themes = validThemes;
             this.saveThemes();
-            if (window && window.Logger) window.Logger.info('已自动清理无效/重复主题');
+            if (window && window.window.Logger) window.window.Logger.info('已自动清理无效/重复主题');
         }
         return this.themes;
     }
@@ -259,7 +220,7 @@ class ThemeService {
 
     updateTheme(theme) {
         if (!theme || typeof theme.name !== 'string' || !theme.name.trim() || typeof theme.id !== 'string' || !theme.id.trim()) {
-            if (window && window.Logger) window.Logger.warn('禁止保存无名或无效id主题', theme);
+            if (window && window.window.Logger) window.window.Logger.warn('禁止保存无名或无效id主题', theme);
             throw new Error('主题名称和ID不能为空');
         }
         this.themes = this.themes.filter(t => t.id !== theme.id);
@@ -278,10 +239,10 @@ class ThemeService {
     
     // Debug method
     test() {
-        Logger.debug('ThemeService test');
-        Logger.debug('Themes count', this.themes.length);
-        Logger.debug('Themes', this.themes);
-        Logger.debug('Active theme ID', this.activeThemeId);
+        window.Logger.debug('ThemeService test');
+        window.Logger.debug('Themes count', this.themes.length);
+        window.Logger.debug('Themes', this.themes);
+        window.Logger.debug('Active theme ID', this.activeThemeId);
         return 'ThemeService is working!';
     }
 
@@ -307,8 +268,4 @@ class ThemeService {
     }
 }
 
-window.themeService = new ThemeService(); 
-
-if (typeof window !== 'undefined') {
-    cleanInvalidThemes();
-} 
+// ThemeService is instantiated in app.js 

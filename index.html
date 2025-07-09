@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="src/styles/components/theme-editor-forms.css">
     <link rel="stylesheet" href="src/styles/components/theme-preview.css">
     <link rel="stylesheet" href="src/styles/components/themes-grid.css">
+    <link rel="stylesheet" href="src/styles/components/data-management.css">
+    <link rel="stylesheet" href="src/styles/components/enhanced-theme-editor.css">
 
     <!-- External Dependencies -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
@@ -60,10 +62,35 @@
                     <p>在这里挥洒您的创意，让思想流动成美丽的文字。</p>
                 </div>
                 <div class="editor-actions">
-                    <button id="import-md-btn" class="btn btn-secondary">导入Markdown</button>
-                    <button id="change-theme-btn" class="btn btn-secondary">切换主题</button>
-                    <div id="current-theme-display" class="current-theme-display"></div>
-                    <button id="copy-wechat-btn" class="btn btn-accent">一键复制</button>
+                    <div class="editor-actions-left">
+                        <button id="undo-btn" class="btn btn-secondary" disabled title="撤销 (Ctrl+Z)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v6h6"/>
+                                <path d="m21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
+                            </svg>
+                            撤销
+                        </button>
+                        <button id="redo-btn" class="btn btn-secondary" disabled title="重做 (Ctrl+Y)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 7v6h-6"/>
+                                <path d="m3 17a9 9 0 019-9 9 9 0 016 2.3l3-2.3"/>
+                            </svg>
+                            重做
+                        </button>
+                        <button id="import-md-btn" class="btn btn-secondary">导入Markdown</button>
+                        <input type="file" id="markdown-file-input" accept=".md, .markdown" style="display: none;">
+                    </div>
+                    <div class="editor-actions-center">
+                        <button id="change-theme-btn" class="btn btn-secondary">切换主题</button>
+                        <div id="current-theme-display" class="current-theme-display"></div>
+                    </div>
+                    <div class="editor-actions-right">
+                        <button id="copy-wechat-btn" class="btn btn-accent">一键复制</button>
+                    </div>
+                </div>
+                <div class="editor-status-bar">
+                    <span id="editor-status-bar">准备就绪</span>
+                    <span id="word-count">0 字</span>
                 </div>
                 <div class="editor-wrapper">
                     <div id="editor-container"></div>
@@ -90,8 +117,64 @@
             </div>
             <div id="drafts-view" class="drafts-view" style="display:none;">
                 <div class="main-view-header">
-                    <h1>草稿仓</h1>
-                    <p>这里存放着您所有未完成的作品。点击"载入"即可继续编辑。</p>
+                    <div class="main-view-header-content">
+                        <h1>草稿仓</h1>
+                        <p>这里存放着您所有未完成的作品。点击"载入"即可继续编辑。</p>
+                    </div>
+                    <div class="view-actions">
+                        <button id="create-new-draft-btn" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14"/>
+                                <path d="M5 12h14"/>
+                            </svg>
+                            新建草稿
+                        </button>
+                        <button id="data-management-btn" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                                <path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"/>
+                            </svg>
+                            数据管理
+                        </button>
+                    </div>
+                </div>
+                <div class="view-toolbar">
+                    <div class="view-toolbar-left">
+                        <label class="selection-toggle">
+                            <input type="checkbox" id="select-all-drafts">
+                            <span id="select-all-btn">全选</span>
+                        </label>
+                    </div>
+                    <div class="view-toolbar-right">
+                        <button id="batch-delete-drafts" class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6"/>
+                                <path d="m 19,6 v 14 a 2,2 0 0 1 -2,2 H 7 A 2,2 0 0 1 5,18 V 6 m 3,0 V 4 a 2,2 0 0 1 2,-2 h 4 a 2,2 0 0 1 2,2 v 2"/>
+                            </svg>
+                            批量删除
+                        </button>
+                        <button id="batch-publish-drafts" class="btn btn-primary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            批量发布
+                        </button>
+                        <button id="batch-apply-theme-drafts" class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            </svg>
+                            批量主题
+                        </button>
+                    </div>
+                </div>
+                <div id="batch-actions-bar" class="batch-actions-bar">
+                    <div class="batch-actions-info">
+                        <span class="selected-count">0 个项目</span>
+                    </div>
+                    <div class="batch-actions-buttons">
+                        <button class="btn btn-sm" id="batch-export-selected">导出选中</button>
+                        <button class="btn btn-sm" id="clear-selection">取消选择</button>
+                    </div>
                 </div>
                 <div id="drafts-list" class="item-list">
                     <!-- Drafts will be rendered here by DraftsView.js -->
@@ -99,8 +182,66 @@
             </div>
             <div id="publish-view" class="publish-view" style="display:none;">
                 <div class="main-view-header">
-                    <h1>发布仓</h1>
-                    <p>这里是您已完成的杰作。可以随时将它们移回草稿仓进行再次编辑。</p>
+                    <div class="main-view-header-content">
+                        <h1>发布仓</h1>
+                        <p>这里是您已完成的杰作。可以随时将它们移回草稿仓进行再次编辑。</p>
+                    </div>
+                    <div class="view-actions">
+                        <button id="create-new-article-btn" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14"/>
+                                <path d="M5 12h14"/>
+                            </svg>
+                            新建文章
+                        </button>
+                        <button id="import-from-drafts-btn" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17,8 12,3 7,8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            从草稿导入
+                        </button>
+                    </div>
+                </div>
+                <div class="view-toolbar">
+                    <div class="view-toolbar-left">
+                        <label class="selection-toggle">
+                            <input type="checkbox" id="select-all-published">
+                            <span id="select-all-published-btn">全选</span>
+                        </label>
+                    </div>
+                    <div class="view-toolbar-right">
+                        <button id="batch-delete-published" class="btn btn-danger btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6"/>
+                                <path d="m 19,6 v 14 a 2,2 0 0 1 -2,2 H 7 A 2,2 0 0 1 5,18 V 6 m 3,0 V 4 a 2,2 0 0 1 2,-2 h 4 a 2,2 0 0 1 2,2 v 2"/>
+                            </svg>
+                            批量删除
+                        </button>
+                        <button id="batch-move-to-drafts" class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                            移回草稿
+                        </button>
+                        <button id="batch-apply-theme-published" class="btn btn-secondary btn-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            </svg>
+                            批量主题
+                        </button>
+                    </div>
+                </div>
+                <div id="batch-actions-bar-published" class="batch-actions-bar">
+                    <div class="batch-actions-info">
+                        <span class="selected-count-published">0 个项目</span>
+                    </div>
+                    <div class="batch-actions-buttons">
+                        <button class="btn btn-sm" id="batch-export-published">导出选中</button>
+                        <button class="btn btn-sm" id="clear-selection-published">取消选择</button>
+                    </div>
                 </div>
                 <div id="publish-list" class="item-list">
                     <!-- Published articles will be rendered here by PublishView.js -->
@@ -142,97 +283,10 @@
                 </div>
             </div>
             
-            <!-- 主题编辑器静态HTML -->
+            <!-- 主题编辑器视图 -->
             <div id="theme-editor-view" class="theme-editor-view" style="display:none;">
-                <div class="theme-editor-header">
-                    <h2 id="theme-editor-title">编辑主题</h2>
-                    <button class="theme-editor-close" onclick="window.location.hash='#themes'">&times;</button>
-                </div>
-                <div class="theme-editor-body">
-                    <div class="theme-editor-sidebar">
-                        <div class="editor-tabs">
-                            <button class="tab-btn active" data-tab="basic">基础设置</button>
-                            <button class="tab-btn" data-tab="advanced">高级设置</button>
-                        </div>
-                        <form id="theme-editor-form" class="editor-form">
-                            <!-- 基础设置 -->
-                            <div class="tab-content active" id="basic-tab">
-                                <div class="form-section">
-                                    <h4>标题样式</h4>
-                                    <div class="form-row">
-                                        <label for="--h1-color">H1 颜色</label>
-                                        <input type="color" id="--h1-color" name="--h1-color">
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="--h2-color">H2 颜色</label>
-                                        <input type="color" id="--h2-color" name="--h2-color">
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="--h3-color">H3 颜色</label>
-                                        <input type="color" id="--h3-color" name="--h3-color">
-                                    </div>
-                                </div>
-                                <div class="form-section">
-                                    <h4>正文样式</h4>
-                                    <div class="form-row">
-                                        <label for="--p-color">正文颜色</label>
-                                        <input type="color" id="--p-color" name="--p-color">
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="--p-font-size">字体大小</label>
-                                        <input type="range" id="--p-font-size" name="--p-font-size" min="12" max="24" step="1">
-                                        <span class="range-value">16px</span>
-                                    </div>
-                                </div>
-                                <div class="form-section">
-                                    <h4>链接样式</h4>
-                                    <div class="form-row">
-                                        <label for="--a-color">链接颜色</label>
-                                        <input type="color" id="--a-color" name="--a-color">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 高级设置 -->
-                            <div class="tab-content" id="advanced-tab">
-                                <div class="form-section">
-                                    <h4>块级元素</h4>
-                                    <div class="form-row">
-                                        <label for="--blockquote-bg">引用背景</label>
-                                        <input type="color" id="--blockquote-bg" name="--blockquote-bg">
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="--code-bg">代码背景</label>
-                                        <input type="color" id="--code-bg" name="--code-bg">
-                                    </div>
-                                </div>
-                                <div class="form-section">
-                                    <h4>间距设置</h4>
-                                    <div class="form-row">
-                                        <label for="--p-margin-bottom">段落间距</label>
-                                        <input type="range" id="--p-margin-bottom" name="--p-margin-bottom" min="10" max="40" step="2">
-                                        <span class="range-value">20px</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="theme-editor-preview">
-                        <h3>实时预览</h3>
-                        <div id="theme-preview-pane" class="preview-content">
-                            <h1>这是标题样式</h1>
-                            <p>这是正文段落的样式预览。您可以在这里看到字体颜色、段落间距等效果。</p>
-                            <p>这段包含<a href="#">链接样式</a>的文字，可以看到链接的颜色效果。</p>
-                            <blockquote>这是引用块的样式预览，可以看到背景色效果。</blockquote>
-                            <p>这里有一些<strong>粗体文字</strong>和<em>斜体文字</em>的样式。</p>
-                            <hr>
-                            <p>这是分割线下方的文字。</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="theme-editor-footer">
-                    <button class="btn btn-secondary" onclick="window.location.hash='#themes'">取消</button>
-                    <button class="btn btn-primary" id="save-theme-btn">保存主题</button>
+                <div id="theme-editor-container" class="theme-editor-container">
+                    <!-- 主题编辑器内容将由 ThemeEditorView.js 动态渲染 -->
                 </div>
             </div>
         </main>
@@ -240,9 +294,19 @@
 
     <!-- App Core -->
     <script src="src/js/config.js"></script>
+    <script src="src/js/utils/dom-cache.js"></script>
+    <script src="src/js/utils/event-cleanup-manager.js"></script>
     <script src="src/js/utils/performance-monitor.js"></script>
     <script src="src/js/utils/logger.js"></script>
     <script src="src/js/utils/error-handler.js"></script>
+    <script src="src/js/utils/standard-error-handler.js"></script>
+    <script src="src/js/utils/editor-integration-manager.js"></script>
+    <script src="src/js/utils/event-manager.js"></script>
+    <script src="src/js/utils/history-manager.js"></script>
+    <script src="src/js/utils/data-manager.js"></script>
+    <script src="src/js/utils/enhanced-theme-editor.js"></script>
+    <script src="src/js/utils/batch-operations-manager.js"></script>
+    <script src="src/js/utils/router.js"></script>
 
     <!-- App Services -->
     <script src="src/js/services/theme-service.js"></script>

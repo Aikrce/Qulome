@@ -157,7 +157,26 @@ window.ThemesView = {
      * 显示主题编辑器
      */
     showThemeEditor: (themeId) => {
-        window.ThemeEditorModal.show(themeId);
+        try {
+            const theme = window.themeService.getTheme(themeId);
+            if (!theme) {
+                window.Logger.error('Theme not found for editing', themeId);
+                if (window.Notification && window.Notification.show) {
+                    window.Notification.show('主题不存在', 'error');
+                } else {
+                    alert('主题不存在');
+                }
+                return;
+            }
+            
+            // 使用路由系统导航到主题编辑器
+            window.location.hash = `#theme-editor?id=${themeId}`;
+            
+            window.Logger.debug('Navigating to theme editor', { themeId, themeName: theme.name });
+        } catch (error) {
+            window.Logger.error('Failed to show theme editor', error);
+            window.StandardErrorHandler.handle(error, 'ThemesView.showThemeEditor');
+        }
     },
 
     /**

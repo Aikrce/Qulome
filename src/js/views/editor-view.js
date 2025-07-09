@@ -72,15 +72,6 @@ function openIconSelectionModal(quill) {
     document.addEventListener('keydown', escapeHandler);
 }
 
-// Debounce helper function
-function debounce(func, delay) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
 window.EditorView = {
     // State management
     quillInstance: null,
@@ -89,6 +80,8 @@ window.EditorView = {
     isInitialized: false,
     eventHandlers: new Map(), // Track event handlers for cleanup
     autoSaveHandler: null, // Track auto-save handler
+    // 新增：Markdown文件输入元素引用
+    markdownFileInput: null,
 
     /**
      * Initialize or re-initialize the editor view
@@ -100,25 +93,145 @@ window.EditorView = {
             }
             
             this.currentDraftId = window.draftService.getCurrentDraftId();
+            this.initializeMarkdownInput(); // 初始化Markdown文件输入元素
             this.initializeQuillEditor();
+            this.initializeHistoryManager();
             this.loadCurrentDraft();
             this.setupAutoSave();
             this.setupActionButtons();
             this.setupBottomButtons();
+            this.setupWordCount();
             this.updateThemeDisplay();
-            
+            this.setupIntegrationManager(); // 设置协同管理器
             this.isInitialized = true;
+            
             window.Logger.debug('EditorView initialized successfully');
         } catch (error) {
             window.Logger.error('Failed to initialize EditorView', error);
-            this.showError('编辑器初始化失败，请刷新页面重试');
+            window.ErrorHandler.handle(error, 'EditorView.init');
         }
+    },
+
+    /**
+     * 设置协同管理器
+     */
+    setupIntegrationManager: function() {
+        if (window.EditorIntegrationManager) {
+            // 初始化协同管理器
+            if (!window.EditorIntegrationManager.isInitialized) {
+                window.EditorIntegrationManager.init();
+            }
+            
+            // 设置当前编辑器为活动编辑器
+            window.EditorIntegrationManager.setActiveEditor(this);
+            
+            // 注册主题变更回调
+            this.themeChangeUnsubscribe = window.EditorIntegrationManager.registerThemeChangeCallback((theme) => {
+                this.onThemeChanged(theme);
+            });
+            
+            window.Logger.debug('Integration manager setup completed');
+        } else {
+            window.Logger.warn('EditorIntegrationManager not available');
+        }
+    },
+    
+    /**
+     * 处理主题变更
+     */
+    onThemeChanged: function(theme) {
+        if (!theme || !this.quillInstance) return;
+        
+        try {
+            // 更新编辑器样式
+            const editorRoot = this.quillInstance.root;
+            
+            if (theme.styles) {
+                editorRoot.style.fontSize = theme.styles['--p-font-size'] || '16px';
+                editorRoot.style.fontFamily = theme.styles['--p-font-family'] || 'sans-serif';
+                editorRoot.style.color = theme.styles['--p-color'] || '#333';
+                editorRoot.style.lineHeight = theme.styles['--p-line-height'] || '1.7';
+            }
+            
+            // 更新主题显示
+            this.updateThemeDisplay();
+            
+            window.Logger.debug('Editor theme updated', theme.name);
+        } catch (error) {
+            window.Logger.error('Failed to apply theme to editor', error);
+        }
+    },
+    initializeMarkdownInput: function() {
+        this.markdownFileInput = window.DOMCache ? 
+            window.DOMCache.getElementById('markdown-file-input') : 
+            document.getElementById('markdown-file-input');
+        
+        if (this.markdownFileInput) {
+            // 清理之前的事件监听器
+            this.markdownFileInput.removeEventListener('change', this.handleFileSelect);
+            // 添加新的事件监听器
+            this.markdownFileInput.addEventListener('change', this.handleFileSelect.bind(this));
+            window.Logger.debug('Markdown file input initialized');
+        } else {
+            window.Logger.warn('Markdown file input element not found');
+        }
+    },
+    initializeHistoryManager: function() {
+        if (window.HistoryManager && this.quillInstance) {
+            window.HistoryManager.init(this.quillInstance);
+            
+            // 设置撤销/重做按钮事件
+            this.addEventHandler('undo-btn', 'click', () => {
+                window.HistoryManager.undo();
+            });
+            
+            this.addEventHandler('redo-btn', 'click', () => {
+                window.HistoryManager.redo();
+            });
+            
+            window.Logger.debug('History manager initialized for editor');
+        } else {
+            window.Logger.warn('HistoryManager not available or Quill not initialized');
+        }
+    },
+
+    /**
+     * 设置字数统计
+     */
+    setupWordCount: function() {
+        if (!this.quillInstance) return;
+        
+        const updateWordCount = () => {
+            const text = this.quillInstance.getText();
+            const wordCount = text.trim().length;
+            const wordCountElement = document.getElementById('word-count');
+            if (wordCountElement) {
+                wordCountElement.textContent = `${wordCount} 字`;
+            }
+        };
+        
+        // 初始更新
+        updateWordCount();
+        
+        // 监听内容变化
+        this.quillInstance.on('text-change', updateWordCount);
     },
 
     /**
      * Clean up all event handlers and timers
      */
     cleanup: function() {
+        // 清理协同管理器回调
+        if (this.themeChangeUnsubscribe) {
+            this.themeChangeUnsubscribe();
+            this.themeChangeUnsubscribe = null;
+        }
+        
+        // 清理历史管理器
+        if (window.HistoryManager) {
+            window.HistoryManager.destroy();
+        }
+        
         if (this.autoSaveHandler && this.quillInstance) {
             this.quillInstance.off('text-change', this.autoSaveHandler);
         }
@@ -128,6 +241,11 @@ window.EditorView = {
             element.removeEventListener(handler.event, handler.callback);
         });
         this.eventHandlers.clear();
+        
+        // 清理Markdown文件输入监听器
+        if (this.markdownFileInput) {
+            this.markdownFileInput.removeEventListener('change', this.handleFileSelect);
+        }
 
         this.isInitialized = false;
         window.Logger.debug('EditorView cleaned up');
@@ -214,7 +332,7 @@ window.EditorView = {
     setupAutoSave: function() {
         if (!this.quillInstance) return;
         
-        this.autoSaveHandler = debounce(() => {
+        this.autoSaveHandler = window.ThemeUtils.debounce(() => {
             const content = this.quillInstance.root.innerHTML;
             window.draftService.saveDraft(this.currentDraftId, content);
         }, 1000);
@@ -256,8 +374,57 @@ window.EditorView = {
      * Handlers for all actions
      */
     handleImport: function() {
-        // ... (Implementation for import)
-        window.NotificationUtils.showError('导入功能待实现');
+        // 触发隐藏的文件输入元素的点击事件
+        if (this.markdownFileInput) {
+            this.markdownFileInput.click();
+            window.NotificationUtils.showInfo('请选择一个Markdown文件');
+        } else {
+            window.NotificationUtils.showError('Markdown文件导入组件未准备好');
+            window.Logger.error('Markdown file input element not found when trying to import.');
+        }
+    },
+
+    /**
+     * 处理文件选择事件，读取Markdown文件并导入到编辑器
+     */
+    handleFileSelect: function(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            window.NotificationUtils.showInfo('未选择任何文件');
+            return;
+        }
+
+        if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+            window.NotificationUtils.showError('请选择一个.md或.markdown文件');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const markdownText = e.target.result;
+            try {
+                if (!this.quillInstance) {
+                    window.NotificationUtils.showError('编辑器未初始化，无法导入内容');
+                    return;
+                }
+
+                const converter = new showdown.Converter();
+                const htmlContent = converter.makeHtml(markdownText);
+
+                // 插入内容到Quill编辑器
+                this.quillInstance.setText(''); // 清空现有内容
+                this.quillInstance.clipboard.dangerouslyPasteHTML(0, htmlContent);
+                window.NotificationUtils.showSuccess('Markdown内容已成功导入！');
+            } catch (error) {
+                window.Logger.error('处理Markdown文件失败', error.message, error.stack);
+                window.NotificationUtils.showError('导入Markdown内容时发生错误');
+            }
+        };
+        reader.onerror = (error) => {
+            window.Logger.error('读取文件失败', error.message, error.stack);
+            window.NotificationUtils.showError('读取文件失败，请重试');
+        };
+        reader.readAsText(file);
     },
 
     handleThemeChange: function() {
@@ -290,8 +457,352 @@ window.EditorView = {
     },
     
     handleCopy: function() {
-        // ... (Implementation for copy)
-        window.NotificationUtils.showError('复制功能待实现');
+        try {
+            if (!this.quillInstance) {
+                throw new Error('编辑器未初始化');
+            }
+            
+            // 获取编辑器内容
+            const htmlContent = this.quillInstance.root.innerHTML;
+            
+            // 处理图标和图片组
+            const processedContent = this.processContentForWeChat(htmlContent);
+            
+            // 尝试使用现代剪贴板 API 复制富文本
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const clipboardItem = new ClipboardItem({
+                    'text/html': new Blob([processedContent], { type: 'text/html' }),
+                    'text/plain': new Blob([this.htmlToText(processedContent)], { type: 'text/plain' })
+                });
+                
+                navigator.clipboard.write([clipboardItem]).then(() => {
+                    if (window.Notification && window.Notification.show) {
+                        window.Notification.show('内容已复制到剪贴板，可直接粘贴到微信公众号编辑器！', 'success');
+                    } else {
+                        alert('内容已复制到剪贴板！');
+                    }
+                }).catch(error => {
+                    window.Logger.warn('Modern clipboard API failed, falling back to legacy method', error);
+                    this.fallbackCopyRichText(processedContent);
+                });
+            } else {
+                // 备用方案
+                this.fallbackCopyRichText(processedContent);
+            }
+        } catch (error) {
+            window.Logger.error('Failed to copy content', error);
+            window.StandardErrorHandler.handle(error, 'EditorView.handleCopy');
+        }
+    },
+    
+    /**
+     * 将HTML转换为纯文本
+     */
+    htmlToText: function(html) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        return tempDiv.textContent || tempDiv.innerText || '';
+    },
+    
+    /**
+     * 备用富文本复制方法
+     */
+    fallbackCopyRichText: function(content) {
+        try {
+            // 创建临时的可编辑div来复制富文本
+            const tempDiv = document.createElement('div');
+            tempDiv.contentEditable = true;
+            tempDiv.innerHTML = content;
+            tempDiv.style.position = 'fixed';
+            tempDiv.style.left = '-999999px';
+            tempDiv.style.top = '-999999px';
+            tempDiv.style.opacity = '0';
+            document.body.appendChild(tempDiv);
+            
+            // 选择内容
+            const range = document.createRange();
+            range.selectNodeContents(tempDiv);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // 执行复制命令
+            const successful = document.execCommand('copy');
+            
+            // 清理
+            selection.removeAllRanges();
+            document.body.removeChild(tempDiv);
+            
+            if (successful) {
+                if (window.Notification && window.Notification.show) {
+                    window.Notification.show('内容已复制到剪贴板，可直接粘贴到微信公众号编辑器！', 'success');
+                } else {
+                    alert('内容已复制到剪贴板！');
+                }
+            } else {
+                throw new Error('复制命令执行失败');
+            }
+        } catch (error) {
+            window.Logger.error('Fallback rich text copy failed', error);
+            // 显示手动复制对话框
+            this.showManualCopyDialog(content);
+        }
+    },
+    
+    /**
+     * 备用复制方法（纯文本）
+     */
+    fallbackCopy: function(content) {
+        try {
+            // 创建临时文本域
+            const textArea = document.createElement('textarea');
+            textArea.value = content;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            // 执行复制命令
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            if (successful) {
+                if (window.Notification && window.Notification.show) {
+                    window.Notification.show('内容已复制到剪贴板！', 'success');
+                } else {
+                    alert('内容已复制到剪贴板！');
+                }
+            } else {
+                throw new Error('复制命令执行失败');
+            }
+        } catch (error) {
+            window.Logger.error('Fallback copy failed', error);
+            // 显示手动复制对话框
+            this.showManualCopyDialog(content);
+        }
+    },
+    
+    /**
+     * 显示手动复制对话框
+     */
+    showManualCopyDialog: function(content) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content copy-modal">
+                <h3>复制内容</h3>
+                <p>请手动选中下方内容并复制（Ctrl+C）：</p>
+                <div id="copy-content" style="width: 100%; height: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; overflow-y: auto; background: white;" contenteditable="true"></div>
+                <div style="margin-top: 15px; text-align: right;">
+                    <button class="btn btn-secondary" id="select-all-btn">全选</button>
+                    <button class="btn btn-primary modal-close-btn">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // 设置富文本内容
+        const contentDiv = modal.querySelector('#copy-content');
+        contentDiv.innerHTML = content;
+        
+        // 全选按钮事件
+        const selectAllBtn = modal.querySelector('#select-all-btn');
+        selectAllBtn.onclick = () => {
+            const range = document.createRange();
+            range.selectNodeContents(contentDiv);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            contentDiv.focus();
+        };
+        
+        // 关闭按钮事件
+        const closeBtn = modal.querySelector('.modal-close-btn');
+        closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        // 点击背景关闭
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
+        
+        // 自动全选内容
+        setTimeout(() => {
+            selectAllBtn.click();
+        }, 100);
+    },
+    
+    /**
+     * 处理内容以适配微信公众号
+     */
+    processContentForWeChat: function(htmlContent) {
+        // 创建临时DOM元素用于处理
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        // 处理图标占位符
+        const iconPlaceholders = tempDiv.querySelectorAll('[data-icon], span');
+        iconPlaceholders.forEach(element => {
+            const text = element.textContent;
+            const iconMatch = text.match(/\[icon:(.+?)\]/);
+            if (iconMatch) {
+                const iconName = iconMatch[1];
+                const icon = window.iconService ? window.iconService.getIconByName(iconName) : null;
+                if (icon) {
+                    // 替换为实际图标
+                    element.innerHTML = icon.svg;
+                } else {
+                    // 移除无效图标占位符
+                    element.textContent = text.replace(/\[icon:.+?\]/g, '');
+                }
+            }
+        });
+        
+        // 处理图片组
+        const imageGroups = tempDiv.querySelectorAll('.ql-image-group');
+        imageGroups.forEach(group => {
+            try {
+                const data = JSON.parse(group.getAttribute('data-images'));
+                if (data && data.images && data.images.length > 0) {
+                    const imageHTML = data.images.map(img => `<img src="${img.src}" alt="${img.alt || ''}" style="max-width: 100%; margin: 5px;"/>`).join('');
+                    group.innerHTML = `<div style="text-align: ${data.align || 'center'}; margin: 20px 0;">${imageHTML}</div>`;
+                }
+            } catch (e) {
+                window.Logger.warn('Failed to process image group', e);
+            }
+        });
+        
+        // 清理微信不支持的属性
+        this.cleanForWeChat(tempDiv);
+        
+        return tempDiv.innerHTML;
+    },
+    
+    /**
+     * 清理不符合微信公众号编辑器的属性和样式
+     */
+    cleanForWeChat: function(container) {
+        // 微信编辑器支持的基本标签
+        const allowedTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'u', 'del', 'img', 'br', 'div', 'span', 'blockquote', 'pre', 'code', 'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td'];
+        
+        // 递归处理所有元素
+        const processElement = (element) => {
+            if (element.nodeType === Node.ELEMENT_NODE) {
+                const tagName = element.tagName.toLowerCase();
+                
+                // 移除不支持的标签，但保留其内容
+                if (!allowedTags.includes(tagName)) {
+                    const fragment = document.createDocumentFragment();
+                    while (element.firstChild) {
+                        fragment.appendChild(element.firstChild);
+                    }
+                    element.parentNode.replaceChild(fragment, element);
+                    return;
+                }
+                
+                // 清理属性，只保留必要的
+                const allowedAttributes = {
+                    'p': ['style'],
+                    'h1': ['style'],
+                    'h2': ['style'],
+                    'h3': ['style'],
+                    'h4': ['style'],
+                    'h5': ['style'],
+                    'h6': ['style'],
+                    'strong': ['style'],
+                    'em': ['style'],
+                    'u': ['style'],
+                    'del': ['style'],
+                    'img': ['src', 'alt', 'style'],
+                    'div': ['style'],
+                    'span': ['style'],
+                    'blockquote': ['style'],
+                    'pre': ['style'],
+                    'code': ['style'],
+                    'ul': ['style'],
+                    'ol': ['style'],
+                    'li': ['style'],
+                    'a': ['href', 'style'],
+                    'table': ['style'],
+                    'thead': ['style'],
+                    'tbody': ['style'],
+                    'tr': ['style'],
+                    'th': ['style'],
+                    'td': ['style']
+                };
+                
+                const allowed = allowedAttributes[tagName] || [];
+                const attrs = [...element.attributes];
+                attrs.forEach(attr => {
+                    if (!allowed.includes(attr.name)) {
+                        element.removeAttribute(attr.name);
+                    }
+                });
+                
+                // 清理样式，只保留微信支持的样式
+                if (element.style) {
+                    this.cleanStyleForWeChat(element);
+                }
+            }
+            
+            // 递归处理子元素
+            const children = [...element.childNodes];
+            children.forEach(child => processElement(child));
+        };
+        
+        processElement(container);
+    },
+    
+    /**
+     * 清理样式，只保留微信编辑器支持的样式
+     */
+    cleanStyleForWeChat: function(element) {
+        // 微信编辑器支持的样式属性
+        const allowedStyles = [
+            'color', 'background-color', 'font-size', 'font-weight', 'font-style',
+            'text-align', 'text-decoration', 'line-height', 'margin', 'margin-top',
+            'margin-bottom', 'margin-left', 'margin-right', 'padding', 'padding-top',
+            'padding-bottom', 'padding-left', 'padding-right', 'border', 'border-top',
+            'border-bottom', 'border-left', 'border-right', 'border-color', 'border-style',
+            'border-width', 'border-radius', 'text-indent', 'letter-spacing', 'word-spacing'
+        ];
+        
+        const currentStyle = element.style;
+        const newStyle = {};
+        
+        // 保留支持的样式
+        allowedStyles.forEach(prop => {
+            if (currentStyle[prop]) {
+                newStyle[prop] = currentStyle[prop];
+            }
+        });
+        
+        // 清空现有样式
+        element.style.cssText = '';
+        
+        // 应用清理后的样式
+        Object.keys(newStyle).forEach(prop => {
+            element.style[prop] = newStyle[prop];
+        });
+    },
+    
+    /**
+     * HTML转义工具函数
+     */
+    escapeHtml: function(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     },
 
     handleSave: function() {

@@ -5,7 +5,50 @@ const CURRENT_DRAFT_ID_KEY = 'qulome_current_draft_id';
 function cleanInvalidDrafts() {
     let drafts = getDrafts();
     const initialDraftCount = drafts.length;
-    const validDrafts = drafts.filter(d => d && typeof d.id === 'string' && typeof d.title === 'string' && d.title.trim() && (d.content.replace(/<[^>]+>/g, '').trim() || d.content === '<p><br></p>') && typeof d.content === 'string');
+    
+    // 更严格的验证逻辑，避免删除有效草稿
+    const validDrafts = drafts.filter(d => {
+        // 基本存在性检查
+        if (!d || typeof d !== 'object') {
+            if (window.Logger) window.Logger.warn('发现非对象草稿:', d);
+            return false;
+        }
+        
+        // ID 检查
+        if (!d.id || typeof d.id !== 'string' || d.id.trim() === '') {
+            if (window.Logger) window.Logger.warn('发现无效ID草稿:', d);
+            return false;
+        }
+        
+        // 标题检查 - 允许系统生成的默认标题
+        if (!d.title || typeof d.title !== 'string') {
+            if (window.Logger) window.Logger.warn('发现无效标题草稿:', d);
+            return false;
+        }
+        
+        // 内容检查 - 允许空内容和默认内容
+        if (typeof d.content !== 'string') {
+            if (window.Logger) window.Logger.warn('发现无效内容草稿:', d);
+            return false;
+        }
+        
+        // 更宽松的内容验证 - 不删除新创建的空草稿
+        const textContent = d.content.replace(/<[^>]+>/g, '').trim();
+        const isValidContent = textContent.length > 0 || 
+                              d.content === '<p><br></p>' || 
+                              d.content === '<p></p>' ||
+                              d.content === '' ||
+                              d.title.includes('新草稿') ||
+                              d.title.includes('无标题草稿');
+        
+        if (!isValidContent) {
+            if (window.Logger) window.Logger.warn('发现无效内容草稿:', d);
+            return false;
+        }
+        
+        return true;
+    });
+    
     if (validDrafts.length !== initialDraftCount) {
         saveDrafts(validDrafts);
         if (window && window.Logger) window.Logger.info(`cleanInvalidDrafts: Removed ${initialDraftCount - validDrafts.length} invalid drafts.`);
@@ -15,10 +58,25 @@ function cleanInvalidDrafts() {
 }
 
 function getDrafts() {
-    const drafts = localStorage.getItem(DRAFTS_STORAGE_KEY);
-    const parsedDrafts = drafts ? JSON.parse(drafts) : [];
-    if (window.Logger) window.Logger.debug('getDrafts called, returning:', parsedDrafts);
-    return parsedDrafts;
+    try {
+        const drafts = localStorage.getItem(DRAFTS_STORAGE_KEY);
+        const parsedDrafts = drafts ? JSON.parse(drafts) : [];
+        
+        // 验证数据的完整性
+        if (!Array.isArray(parsedDrafts)) {
+            if (window.Logger) window.Logger.warn('getDrafts: Invalid drafts data, resetting to empty array');
+            localStorage.setItem(DRAFTS_STORAGE_KEY, '[]');
+            return [];
+        }
+        
+        if (window.Logger) window.Logger.debug('getDrafts called, returning:', parsedDrafts);
+        return parsedDrafts;
+    } catch (error) {
+        if (window.Logger) window.Logger.error('getDrafts: Error parsing drafts data:', error);
+        // 数据损坏时重置存储
+        localStorage.setItem(DRAFTS_STORAGE_KEY, '[]');
+        return [];
+    }
 }
 
 function saveDrafts(drafts) {
@@ -69,9 +127,18 @@ function createDraft(content) {
     return newDraft;
 }
 
-// 页面加载时自动清理
+// 页面加载时的初始化检查
 if (typeof window !== 'undefined') {
-    cleanInvalidDrafts();
+    // 延迟执行清理操作，避免在系统初始化时引起问题
+    setTimeout(() => {
+        try {
+            cleanInvalidDrafts();
+        } catch (error) {
+            if (window.Logger) {
+                window.Logger.error('Auto cleanup failed:', error);
+            }
+        }
+    }, 1000);
 }
 
 function setCurrentDraftId(draftId) {
@@ -132,5 +199,19 @@ window.draftService = {
     getCurrentDraftId,
     createDraft,
     deleteDraft,
-    cleanOrphanDrafts
+    cleanOrphanDrafts,
+    cleanInvalidDrafts,
+    extractTitleFromContent: function(content) {
+        const div = document.createElement('div');
+        div.innerHTML = content || '';
+        let title = '';
+        const h = div.querySelector('h1,h2,h3');
+        if (h && h.textContent.trim()) {
+            title = h.textContent.trim();
+        } else {
+            const text = div.textContent.replace(/\s+/g, ' ').trim();
+            title = text.substring(0, 30);
+        }
+        return title || '无标题草稿';
+    }
 }; 

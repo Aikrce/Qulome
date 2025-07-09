@@ -98,6 +98,9 @@ window.PublishView = {
             const imageCount = (article.content.match(/<img[\s>]/g)||[]).length;
             return `
             <div class="list-item" data-article-id="${article.id}">
+              <div class="item-selection">
+                <input type="checkbox" class="item-checkbox" data-item-id="${article.id}">
+              </div>
               <div class="item-main">
                 <div class="item-info">
                   <h3 class="item-title" title="${window.ThemeUtils.escapeHtml(article.title)}">
@@ -140,6 +143,53 @@ window.PublishView = {
      */
     bindEvents: () => {
         try {
+            // 新建文章按钮事件
+            const createNewArticleBtn = document.getElementById('create-new-article-btn');
+            if (createNewArticleBtn) {
+                const handler = () => {
+                    window.PublishView.handleCreateNewArticle();
+                };
+                window.PublishView.addEventHandler(createNewArticleBtn, 'click', handler);
+            }
+            
+            // 从草稿导入按钮事件
+            const importFromDraftsBtn = document.getElementById('import-from-drafts-btn');
+            if (importFromDraftsBtn) {
+                const handler = () => {
+                    window.PublishView.handleImportFromDrafts();
+                };
+                window.PublishView.addEventHandler(importFromDraftsBtn, 'click', handler);
+            }
+            
+            // 批量操作按钮事件
+            const batchDeletePublishedBtn = document.getElementById('batch-delete-published');
+            if (batchDeletePublishedBtn && window.BatchOperationsManager) {
+                window.PublishView.addEventHandler(batchDeletePublishedBtn, 'click', () => {
+                    window.BatchOperationsManager.executeBatchOperation('delete');
+                });
+            }
+
+            const batchMoveToDraftsBtn = document.getElementById('batch-move-to-drafts');
+            if (batchMoveToDraftsBtn && window.BatchOperationsManager) {
+                window.PublishView.addEventHandler(batchMoveToDraftsBtn, 'click', () => {
+                    window.BatchOperationsManager.executeBatchOperation('move-to-drafts');
+                });
+            }
+
+            const batchThemePublishedBtn = document.getElementById('batch-apply-theme-published');
+            if (batchThemePublishedBtn && window.BatchOperationsManager) {
+                window.PublishView.addEventHandler(batchThemePublishedBtn, 'click', () => {
+                    window.BatchOperationsManager.showThemeSelector();
+                });
+            }
+
+            const selectAllPublishedBtn = document.getElementById('select-all-published');
+            if (selectAllPublishedBtn && window.BatchOperationsManager) {
+                window.PublishView.addEventHandler(selectAllPublishedBtn, 'change', (event) => {
+                    window.BatchOperationsManager.toggleSelectAll();
+                });
+            }
+            
             const listContainer = document.getElementById('publish-list');
             
             if (!listContainer) {
@@ -151,6 +201,21 @@ window.PublishView = {
                 window.PublishView.handleListItemClick(event);
             });
 
+            // 绑定复选框事件
+            window.PublishView.addEventHandler(listContainer, 'change', (event) => {
+                if (event.target.classList.contains('item-checkbox')) {
+                    const itemId = event.target.dataset.itemId;
+                    if (itemId && window.BatchOperationsManager) {
+                        window.BatchOperationsManager.toggleSelection(itemId);
+                    }
+                }
+            });
+
+            // 初始化批量操作管理器
+            if (window.BatchOperationsManager) {
+                window.BatchOperationsManager.init('published');
+            }
+
             window.Logger.debug('PublishView events bound successfully');
         } catch (error) {
             window.Logger.error('Failed to bind events', error);
@@ -158,6 +223,155 @@ window.PublishView = {
         }
     },
 
+    /**
+     * 处理创建新文章
+     */
+    handleCreateNewArticle: () => {
+        try {
+            // 创建新草稿并跳转到编辑器
+            const newDraft = window.draftService.createDraft('<p><br></p>', '新文章');
+            if (!newDraft) {
+                throw new Error('创建文章失败');
+            }
+            
+            // 设置为当前编辑的草稿
+            window.draftService.setCurrentDraftId(newDraft.id);
+            
+            // 跳转到编辑器
+            window.location.hash = '#editor';
+            
+            // 显示成功消息
+            setTimeout(() => {
+                window.PublishView.showSuccess('新文章已创建，开始你的创作吧！');
+            }, 300);
+            
+            window.Logger.debug('新文章创建成功:', newDraft.id);
+        } catch (error) {
+            window.Logger.error('创建新文章失败:', error);
+            window.PublishView.showError(error.message || '创建文章失败');
+        }
+    },
+    
+    /**
+     * 处理从草稿导入
+     */
+    handleImportFromDrafts: () => {
+        try {
+            const drafts = window.draftService.getDrafts();
+            if (drafts.length === 0) {
+                window.PublishView.showError('没有可导入的草稿，请先创建一些草稿');
+                return;
+            }
+            
+            // 显示草稿选择对话框
+            window.PublishView.showDraftSelectionModal(drafts);
+            
+        } catch (error) {
+            window.Logger.error('从草稿导入失败:', error);
+            window.PublishView.showError('导入失败');
+        }
+    },
+    
+    /**
+     * 显示草稿选择对话框
+     */
+    showDraftSelectionModal: (drafts) => {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content draft-selection-modal">
+                <div class="modal-header">
+                    <h3>选择草稿导入</h3>
+                    <button class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="draft-list">
+                        ${drafts.map(draft => `
+                            <div class="draft-item" data-draft-id="${draft.id}">
+                                <div class="draft-info">
+                                    <h4>${window.ThemeUtils && window.ThemeUtils.escapeHtml ? window.ThemeUtils.escapeHtml(draft.title) : draft.title}</h4>
+                                    <p class="draft-preview">${window.PublishView.getContentPreview(draft.content)}</p>
+                                    <span class="draft-meta">最后更新: ${window.PublishView.formatDate(draft.updatedAt)}</span>
+                                </div>
+                                <button class="btn btn-primary import-draft-btn" data-draft-id="${draft.id}">导入</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // 绑定事件
+        const closeBtn = modal.querySelector('.modal-close-btn');
+        const importBtns = modal.querySelectorAll('.import-draft-btn');
+        
+        // 关闭按钮
+        closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        // 导入按钮
+        importBtns.forEach(btn => {
+            btn.onclick = (e) => {
+                const draftId = e.target.dataset.draftId;
+                window.PublishView.importDraftToPublish(draftId);
+                document.body.removeChild(modal);
+            };
+        });
+        
+        // 点击背景关闭
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
+    },
+    
+    /**
+     * 导入草稿到发布仓
+     */
+    importDraftToPublish: (draftId) => {
+        try {
+            const draft = window.draftService.getDraft(draftId);
+            if (!draft) {
+                throw new Error('草稿未找到');
+            }
+            
+            if (!confirm(`确定要将草稿 “${draft.title}” 导入到发布仓吗？`)) {
+                return;
+            }
+            
+            // 添加到发布仓
+            window.publishService.addPublished(draft);
+            
+            // 从草稿中删除
+            window.draftService.deleteDraft(draftId);
+            
+            // 处理当前编辑的草稿
+            const currentDraftId = window.draftService.getCurrentDraftId();
+            if (currentDraftId === draftId) {
+                const remainingDrafts = window.draftService.getDrafts();
+                if (remainingDrafts.length > 0) {
+                    window.draftService.setCurrentDraftId(remainingDrafts[0].id);
+                } else {
+                    window.draftService.setCurrentDraftId(null);
+                }
+            }
+            
+            // 重新渲染
+            window.PublishView.render();
+            
+            // 显示成功消息
+            window.PublishView.showSuccess(`草稿 “${draft.title}” 已成功导入到发布仓！`);
+            
+        } catch (error) {
+            window.Logger.error('导入草稿失败:', error);
+            window.PublishView.showError(error.message || '导入失败');
+        }
+    },
+    
     /**
      * 处理列表项点击事件
      */

@@ -42,27 +42,8 @@ window.QulomeConfig = {
 
     // 主题配置
     theme: {
-        defaultStyles: {
-            // 1. 标题系统
-            '--h1-font-size': '24px', '--h1-color': '#1F2937', '--h1-font-weight': 'bold',
-            '--h2-font-size': '20px', '--h2-color': '#1F2937', '--h2-font-weight': 'bold',
-            '--h3-font-size': '18px', '--h3-color': '#1F2937', '--h3-font-weight': 'bold',
-            
-            // 2. 正文系统
-            '--p-font-family': 'sans-serif', '--p-font-size': '16px', '--p-color': '#374151',
-            '--p-line-height': '1.7', '--p-margin-bottom': '20px',
-            
-            // 3. 特殊文本
-            '--a-color': '#4338CA', '--a-hover-color': '#312E81',
-            '--code-bg': '#E5E7EB', '--code-color': '#BE123C',
-            
-            // 4. 块级元素
-            '--blockquote-bg': '#F3F4F6', '--blockquote-border-color': '#D1D5DB',
-            '--code-block-bg': '#111827', '--code-block-color': '#E5E7EB',
-            
-            // 5. 视觉分隔
-            '--hr-color': '#D1D5DB', '--hr-height': '1px'
-        }
+        // 默认样式在 theme-service.js 中定义
+        defaultThemeId: 'default-1'
     },
 
     // 日志配置

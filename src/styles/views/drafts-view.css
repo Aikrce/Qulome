@@ -9,16 +9,19 @@
     flex-direction: column;
 }
 
+/* .list-item 样式已移至 main.css */
+/*
 .list-item {
     display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(14,42,115,0.06);
-  margin-bottom: 24px;
-  padding: 20px 24px 16px 24px;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(14,42,115,0.06);
+    margin-bottom: 24px;
+    padding: 20px 24px 16px 24px;
     transition: box-shadow 0.2s;
 }
+*/
 .item-main {
   display: flex;
   justify-content: space-between;

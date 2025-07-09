@@ -20,10 +20,11 @@ const Logger = {
         }
     },
     timeEnd: (label) => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.1') {
             console.timeEnd(`[Qulome] ${label}`);
         }
     }
 };
 
-export default Logger; 
+// Make Logger available globally
+window.Logger = Logger; 

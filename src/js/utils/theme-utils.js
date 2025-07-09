@@ -207,8 +207,6 @@ window.ThemeUtils = {
         }, 3000);
     },
 
-
-
     /**
      * 防抖函数
      * @param {Function} func - 需要防抖的函数
